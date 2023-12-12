@@ -32,7 +32,7 @@ class Game:
         self.offset_x = 0
         self.offset_y = 0
         self.scroll_area_width = 200
-        self.scroll_area_height = 100
+        self.scroll_area_height = 150
 
         # Walls
         self.walls = []
@@ -59,7 +59,6 @@ class Game:
                     if event.key == pygame.K_SPACE:
                         self.player.jump()
 
-
             self.player.loop(FPS)
             self.handle_move(self.player, self.floor)
 
@@ -67,11 +66,13 @@ class Game:
                 (self.player.rect.left - self.offset_x <= self.scroll_area_width) and self.player.x_vel < 0):
                 self.offset_x += self.player.x_vel
 
+            # drop
             if ((self.player.rect.top - self.offset_y >= HEIGHT - self.scroll_area_height) and self.player.y_vel > 0):
-                self.offset_y += self.player.y_vel 
+                self.offset_y += self.player.y_vel * 3
 
-            elif ((self.player.rect.bottom - self.offset_y <= self.scroll_area_height + 200) and self.player.y_vel <= 0):
-                self.offset_y += self.player.y_vel * 3 
+            #jump
+            elif (self.player.rect.bottom - self.offset_y <= self.scroll_area_height  and self.player.y_vel < 0):
+                self.offset_y += self.player.y_vel 
             
             self.draw()
 
@@ -130,6 +131,18 @@ class Game:
 
         if keys[pygame.K_d] and not collide_right: 
             player.move_right(PLAYER_VEL)
+
+        if keys[pygame.K_LSHIFT]:
+            player.looking_up = True
+            player.angulo = 45
+        else:
+            player.looking_up = False
+
+        if keys[pygame.K_RSHIFT]:
+            player.looking_down = True
+            player.angulo = -45
+        else:
+            player.looking_down = False
 
         self.handle_vertical_condition(self.player, objects, player.y_vel)
 

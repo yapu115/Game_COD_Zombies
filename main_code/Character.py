@@ -22,6 +22,10 @@ class Player(pygame.sprite.Sprite):
         self.sprite = ""
         self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
         self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
+        self.looking_up = False
+        self.looking_down = False
+
+        self.angulo = 0
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -83,6 +87,21 @@ class Player(pygame.sprite.Sprite):
         else: 
             self.arm_sprite = pygame.transform.flip(self.arm_sprite, True, False)
             self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
+
+        if self.looking_up:                         # Esto se puede automatizar con parametros de entrada como el self.angulo para que on hayan tantos ifs
+            if self.direction == "right":
+                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
+                self.arm_rect.y = self.rect.y + 15 
+            else:
+                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
+                self.arm_rect.y = self.rect.y  + 15
+
+        elif self.looking_down:
+            if self.direction == "right":
+                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
+            else:
+                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
+            
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite

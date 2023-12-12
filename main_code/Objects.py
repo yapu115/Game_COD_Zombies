@@ -28,6 +28,6 @@ class Wall_Stone(Object):
     def __init__(self, x, y, size):
         super().__init__(x, y, size, size)
     
-        block = get_block(size, 0, 192)
+        block = get_block(size, 0, 160)
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
