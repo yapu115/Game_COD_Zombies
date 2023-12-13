@@ -18,16 +18,20 @@ class Game:
         self.name = pygame.display.set_caption("Testing")
 
         # Background
-        self.background = funciones.insertar_imagen("SpriteSheets\Background.jpg", WIDTH, HEIGHT)
+        self.background = funciones.insertar_imagen(r"SpriteSheets\Background.jpg", WIDTH, HEIGHT)
         self.rect_background = self.background.get_rect()
 
-        self.player = Player(100, 100, 50, 50)
+        self.starting_room = funciones.insertar_imagen(r"SpriteSheets\backgrounds\trees2.png", 3000, HEIGHT)
+        self.rect_starting_room = funciones.insertar_rect(self.starting_room, 500 , 310)
+
+        self.player = Player(100, HEIGHT - 96, 50, 50)
         self.clock = pygame.time.Clock()
         
         # Blocks
         self.block_size = 32
         #floor
-        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
+        #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
+        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-100, 100)]
 
         self.offset_x = 0
         self.offset_y = 0
@@ -36,8 +40,7 @@ class Game:
 
         # Walls
         self.walls = []
-        #self.walls = [Wall_Stone(i * self.block_size, HEIGHT - self.block_size * 2, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
-        for j in range(30):
+        for j in range(10):
             self.walls.append([Wall_Stone(i * self.block_size, (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(-WIDTH // self.block_size, WIDTH * 2 // self.block_size)])
 
         self.outside_walls = []
@@ -45,6 +48,12 @@ class Game:
         self.upstairs_walls = []
 
         self.bunker_walls = []
+
+        # perks
+
+        self.quick_revive = funciones.insertar_imagen(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
+        self.quick_revive.set_colorkey((255, 255, 255))
+        self.rect_quick_revive = funciones.insertar_rect(self.quick_revive, 0, HEIGHT - 96)
 
     def run(self):
         running = True
@@ -80,12 +89,14 @@ class Game:
 
     def draw(self):
         self.screen.blit(self.background, self.rect_background)
+        self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
         for obj in self.floor:
             obj.draw(self.screen, self.offset_x, self.offset_y)        
-        for wall in self.walls:
-            for block in wall:
-                block.draw(self.screen, self.offset_x, self.offset_y)
+        #for wall in self.walls:
+        #    for block in wall:
+        #        block.draw(self.screen, self.offset_x, self.offset_y)
         
+        self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
         self.player.draw(self.screen, self.offset_x, self.offset_y)
 
         pygame.display.flip()

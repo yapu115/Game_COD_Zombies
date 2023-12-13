@@ -17,7 +17,7 @@ def insertar_rect(imagen, x, y):
     return rect
 
 def flip(sprites):
-        return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
+    return [pygame.transform.flip(sprite, True, False) for sprite in sprites]
 
 
 def load_sprite_sheets(dir1, dir2, width, height, direction=False):
