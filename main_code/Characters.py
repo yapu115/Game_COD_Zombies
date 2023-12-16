@@ -1,6 +1,7 @@
 from typing import Any
 from funciones import *
 from os.path import isfile, join
+from Guns import *
 import pygame
 
 class Player(pygame.sprite.Sprite):
@@ -20,10 +21,19 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
-        #self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
-        #self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
+
+        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
+        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
+
+        self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 45, self.rect.y + 50)
+        self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 50)
+
         self.looking_up = False
         self.looking_down = False
+
+        self.angle = 0
+
+        self.gun = M1911(self.front_arm_rect.x + 5, self.front_arm_rect.y + 5)
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -78,40 +88,57 @@ class Player(pygame.sprite.Sprite):
         self.update_arm()
 
     def update_arm(self):
-        self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
-        #self._front_arm = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 45, 14)
-        #self.back_arm = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 45, 14)
+        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
+        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
 
         if self.direction == "right":
-            self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 45, self.rect.y + 50)
-        else: 
-            self.arm_sprite = pygame.transform.flip(self.arm_sprite, True, False)
-            self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
+            self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 50)
+            self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 48, self.rect.y + 54)
 
+            self.gun.direction = "right"
+            self.gun.update(self.front_arm_rect.x + 35, self.front_arm_rect.y - 10)
+        else: 
+            self.front_arm = pygame.transform.flip(self.front_arm, True, False)
+            self.back_arm = pygame.transform.flip(self.back_arm, True, False)
+
+            self.front_arm_rect = insert_rect(self.back_arm, self.rect.x + 10, self.rect.y + 50)
+            self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 8, self.rect.y + 53)
+
+            self.gun.direction = "left"
+            self.gun.update(self.front_arm_rect.x - 20, self.front_arm_rect.y - 10)
+
+        
         if self.looking_up:                         # Esto se puede automatizar con parametros de entrada como el self.angulo para que on hayan tantos ifs
             if self.direction == "right":
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
-                self.arm_rect.y = self.rect.y + 15 
+                self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
+                self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
             else:
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
-                self.arm_rect.y = self.rect.y  + 15
+                self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
+                self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle)
+            self.front_arm_rect.y = self.rect.y  + 10
+            self.back_arm_rect.y = self.rect.y  + 10
 
         elif self.looking_down:
             if self.direction == "right":
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
+                self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
+                self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
             else:
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
-            
+                self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
+                self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle)
+               
+
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
         self.mask = pygame.mask.from_surface(self.sprite) # Lo que permite el mask es que las colisionen funcionen con los pixeles del personaje y no con las del rectangulo
 
-    def draw(self, window, offset_x, offset_y):
-        window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
-        window.blit(self.arm_sprite, (self.arm_rect.x - offset_x, self.arm_rect.y - offset_y))
-    
+    def draw(self, screen, offset_x, offset_y):
+        screen.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
+        screen.blit(self.back_arm, (self.back_arm_rect.x - offset_x, self.back_arm_rect.y - offset_y))
+        self.gun.draw(screen, offset_x, offset_y)
+        screen.blit(self.front_arm, (self.front_arm_rect.x - offset_x, self.front_arm_rect.y - offset_y))
 
+        self.gun.shoot(screen, offset_x, offset_y)
 
 
 class Zombie(pygame.sprite.Sprite):

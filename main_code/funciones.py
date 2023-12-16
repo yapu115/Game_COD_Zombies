@@ -5,13 +5,13 @@ import os
 import random
 import math
 
-def insertar_imagen(direccion,x, y):
-    imagen = pygame.image.load(direccion)
-    imagen = pygame.transform.scale(imagen, (x, y))
-    return imagen
+def insert_image(direction , width, height):
+    image = pygame.image.load(direction)
+    image = pygame.transform.scale(image, (width, height))
+    return image
 
-def insertar_rect(imagen, x, y):
-    rect = imagen.get_rect()
+def insert_rect(image, x, y):
+    rect = image.get_rect()
     rect.centerx = x
     rect.centery = y
     return rect

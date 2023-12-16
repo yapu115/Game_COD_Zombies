@@ -18,11 +18,11 @@ class Game:
         self.name = pygame.display.set_caption("Testing")
 
         # Background
-        self.background = funciones.insertar_imagen(r"SpriteSheets\backgrounds\Background.jpg", WIDTH, HEIGHT)
+        self.background = funciones.insert_image(r"SpriteSheets\backgrounds\Background.jpg", WIDTH, HEIGHT)
         self.rect_background = self.background.get_rect()
 
-        self.starting_room = funciones.insertar_imagen(r"SpriteSheets\backgrounds\trees2.png", 3000, HEIGHT)
-        self.rect_starting_room = funciones.insertar_rect(self.starting_room, 400 , 310)
+        self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees2.png", 3000, HEIGHT)
+        self.rect_starting_room = funciones.insert_rect(self.starting_room, 400 , 310)
 
         self.clock = pygame.time.Clock()
 
@@ -33,16 +33,16 @@ class Game:
         self.zombie = Zombie(300, 100, 50, 50)
         
         # Enviorment
-        self.truck = funciones.insertar_imagen(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
+        self.truck = funciones.insert_image(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
         self.truck = pygame.transform.scale2x(self.truck)
-        self.rect_truck = funciones.insertar_rect(self.truck, -800, HEIGHT - 180)
+        self.rect_truck = funciones.insert_rect(self.truck, -800, HEIGHT - 180)
         self.truck.set_colorkey((44, 106, 138))
 
         # perks
 
-        self.quick_revive = funciones.insertar_imagen(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
+        self.quick_revive = funciones.insert_image(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
         self.quick_revive.set_colorkey((255, 255, 255))
-        self.rect_quick_revive = funciones.insertar_rect(self.quick_revive, 0, HEIGHT - 96)
+        self.rect_quick_revive = funciones.insert_rect(self.quick_revive, 0, HEIGHT - 96)
         
         # Blocks
         self.block_size = 32
@@ -165,15 +165,19 @@ class Game:
 
         if keys[pygame.K_LSHIFT]:
             player.looking_up = True
-            player.angulo = 45
+            player.angle = 45
         else:
             player.looking_up = False
 
         if keys[pygame.K_RSHIFT]:
             player.looking_down = True
-            player.angulo = -45
+            player.angle = -45
         else:
             player.looking_down = False
+
+        # Shooting
+        if keys[pygame.K_f]:
+            player.gun.fire = True
 
         self.handle_vertical_condition(self.player, objects, player.y_vel)
     
