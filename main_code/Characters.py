@@ -20,12 +20,10 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
-        self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
-        self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
+        #self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
+        #self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
         self.looking_up = False
         self.looking_down = False
-
-        self.angulo = 0
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -81,6 +79,8 @@ class Player(pygame.sprite.Sprite):
 
     def update_arm(self):
         self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
+        #self._front_arm = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 45, 14)
+        #self.back_arm = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 45, 14)
 
         if self.direction == "right":
             self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 45, self.rect.y + 50)
@@ -131,12 +131,12 @@ class Zombie(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
-
-        self.angulo = 0
+        self.attack = False
 
 
     def move(self, dx, dy): # Displaysment in x and displaysment in y
-        self.rect.x += dx
+        if self.attack is False:
+            self.rect.x += dx
         self.rect.y += dy
     
     def move_left(self, vel):
@@ -167,10 +167,8 @@ class Zombie(pygame.sprite.Sprite):
         self.y_vel *= -1 
 
     def update_sprite(self):
-        sprite_sheet = "stay"
-        if self.x_vel != 0:
-            sprite_sheet = "walk"
-        
+        sprite_sheet = "walk"
+
         sprite_sheet_name = sprite_sheet + "_" + self.direction
         sprites = self.SPRITES[sprite_sheet_name]
 
@@ -178,31 +176,6 @@ class Zombie(pygame.sprite.Sprite):
         self.sprite = sprites[sprite_index]
         self.animation_count += 1 
         self.update()
-        self.update_arm()
-
-    def update_arm(self):
-        self.arm_sprite = insertar_imagen(r"SpriteSheets\MainCharacters\Nikolai\hand.png", 45, 14)
-
-        if self.direction == "right":
-            self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 45, self.rect.y + 50)
-        else: 
-            self.arm_sprite = pygame.transform.flip(self.arm_sprite, True, False)
-            self.arm_rect = insertar_rect(self.arm_sprite, self.rect.x + 10, self.rect.y + 50)
-
-        if self.looking_up:                         # Esto se puede automatizar con parametros de entrada como el self.angulo para que on hayan tantos ifs
-            if self.direction == "right":
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
-                self.arm_rect.y = self.rect.y + 15 
-            else:
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
-                self.arm_rect.y = self.rect.y  + 15
-
-        elif self.looking_down:
-            if self.direction == "right":
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, self.angulo)
-            else:
-                self.arm_sprite = pygame.transform.rotate(self.arm_sprite, -self.angulo)
-            
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
@@ -210,4 +183,3 @@ class Zombie(pygame.sprite.Sprite):
 
     def draw(self, window, offset_x, offset_y):
         window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
-        window.blit(self.arm_sprite, (self.arm_rect.x - offset_x, self.arm_rect.y - offset_y))

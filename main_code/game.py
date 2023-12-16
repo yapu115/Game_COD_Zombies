@@ -4,7 +4,7 @@ import random
 import math
 from os import listdir
 from os.path import isfile, join
-from Character import Player
+from Characters import Player, Zombie 
 import funciones
 from constants import *
 from Objects import *
@@ -18,14 +18,31 @@ class Game:
         self.name = pygame.display.set_caption("Testing")
 
         # Background
-        self.background = funciones.insertar_imagen(r"SpriteSheets\Background.jpg", WIDTH, HEIGHT)
+        self.background = funciones.insertar_imagen(r"SpriteSheets\backgrounds\Background.jpg", WIDTH, HEIGHT)
         self.rect_background = self.background.get_rect()
 
         self.starting_room = funciones.insertar_imagen(r"SpriteSheets\backgrounds\trees2.png", 3000, HEIGHT)
-        self.rect_starting_room = funciones.insertar_rect(self.starting_room, 500 , 310)
+        self.rect_starting_room = funciones.insertar_rect(self.starting_room, 400 , 310)
 
-        self.player = Player(100, HEIGHT - 96, 50, 50)
         self.clock = pygame.time.Clock()
+
+        # Player
+        self.player = Player(100, HEIGHT - 96, 50, 50)
+
+        # Zombies
+        self.zombie = Zombie(300, 100, 50, 50)
+        
+        # Enviorment
+        self.truck = funciones.insertar_imagen(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
+        self.truck = pygame.transform.scale2x(self.truck)
+        self.rect_truck = funciones.insertar_rect(self.truck, -800, HEIGHT - 180)
+        self.truck.set_colorkey((44, 106, 138))
+
+        # perks
+
+        self.quick_revive = funciones.insertar_imagen(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
+        self.quick_revive.set_colorkey((255, 255, 255))
+        self.rect_quick_revive = funciones.insertar_rect(self.quick_revive, 0, HEIGHT - 96)
         
         # Blocks
         self.block_size = 32
@@ -49,11 +66,6 @@ class Game:
 
         self.bunker_walls = []
 
-        # perks
-
-        self.quick_revive = funciones.insertar_imagen(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
-        self.quick_revive.set_colorkey((255, 255, 255))
-        self.rect_quick_revive = funciones.insertar_rect(self.quick_revive, 0, HEIGHT - 96)
 
     def run(self):
         running = True
@@ -69,7 +81,9 @@ class Game:
                         self.player.jump()
 
             self.player.loop(FPS)
+            self.zombie.loop(FPS)
             self.handle_move(self.player, self.floor)
+            self.handle_zombie_move(self.zombie, self.floor)
 
             if ((self.player.rect.right - self.offset_x >= WIDTH - self.scroll_area_width) and self.player.x_vel > 0) or (
                 (self.player.rect.left - self.offset_x <= self.scroll_area_width) and self.player.x_vel < 0):
@@ -96,8 +110,10 @@ class Game:
         #    for block in wall:
         #        block.draw(self.screen, self.offset_x, self.offset_y)
         
+        self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
         self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
         self.player.draw(self.screen, self.offset_x, self.offset_y)
+        self.zombie.draw(self.screen, self.offset_x, self.offset_y)
 
         pygame.display.flip()
 
@@ -125,6 +141,10 @@ class Game:
             if pygame.sprite.collide_mask(player, obj):
                 collided_object = obj
                 break
+        
+        if player.rect.colliderect(self.rect_truck):
+            print("a")
+            collided_object = self.rect_truck
 
         player.move(-dx, 0)
         player.update()
@@ -156,7 +176,19 @@ class Game:
             player.looking_down = False
 
         self.handle_vertical_condition(self.player, objects, player.y_vel)
+    
+    def handle_zombie_move(self, zombie, objects):
+        #for zombie in zombies:
+            if zombie.rect.colliderect(self.player.rect):
+                pass
+            else:
+                if zombie.rect.x > self.player.rect.x:
+                    zombie.move_left(1)
+                else:
+                    zombie.move_right(1)
+                pass
 
+            self.handle_vertical_condition(zombie, objects, zombie.y_vel)
 
 
     
