@@ -79,6 +79,10 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         self.player.jump()
+                    
+                    # Shooting
+                    if event.key == pygame.K_f:
+                        self.player.gun.fire = True
 
             self.player.loop(FPS)
             self.zombie.loop(FPS)
@@ -175,9 +179,6 @@ class Game:
         else:
             player.looking_down = False
 
-        # Shooting
-        if keys[pygame.K_f]:
-            player.gun.fire = True
 
         self.handle_vertical_condition(self.player, objects, player.y_vel)
     

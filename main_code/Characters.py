@@ -138,7 +138,7 @@ class Player(pygame.sprite.Sprite):
         self.gun.draw(screen, offset_x, offset_y)
         screen.blit(self.front_arm, (self.front_arm_rect.x - offset_x, self.front_arm_rect.y - offset_y))
 
-        self.gun.shoot(screen, offset_x, offset_y)
+        self.gun.shoot()
 
 
 class Zombie(pygame.sprite.Sprite):
