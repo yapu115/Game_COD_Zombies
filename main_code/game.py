@@ -8,6 +8,7 @@ from Characters import Player, Zombie
 import funciones
 from constants import *
 from Objects import *
+from enviorment import Door
 
 
 class Game:
@@ -38,6 +39,10 @@ class Game:
         self.rect_truck = funciones.insert_rect(self.truck, -800, HEIGHT - 180)
         self.truck.set_colorkey((44, 106, 138))
 
+        # Doors
+
+        self.door = Door(300, HEIGHT - 105, 3, 3)
+
         # perks
 
         self.quick_revive = funciones.insert_image(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
@@ -58,7 +63,7 @@ class Game:
         # Walls
         self.walls = []
         for j in range(10):
-            self.walls.append([Wall_Stone(i * self.block_size, (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(-WIDTH // self.block_size, WIDTH * 2 // self.block_size)])
+            self.walls.append([Wall_Stone(i * self.block_size, (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 60)])
 
         self.outside_walls = []
 
@@ -83,6 +88,14 @@ class Game:
                     # Shooting
                     if event.key == pygame.K_f:
                         self.player.gun.fire = True
+
+                    if event.key == pygame.K_e:
+                        if self.player.rect.colliderect((self.door.rect.x - 30, self.door.rect.y, self.door.rect.width, self.door.rect.height)):
+                            print("aaa")
+                            if self.door.state == "opened":
+                                self.door.state = "closed"
+                            else:
+                                self.door.state =  "opened"
 
             self.player.loop(FPS)
             self.zombie.loop(FPS)
@@ -110,12 +123,13 @@ class Game:
         self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
         for obj in self.floor:
             obj.draw(self.screen, self.offset_x, self.offset_y)        
-        #for wall in self.walls:
-        #    for block in wall:
-        #        block.draw(self.screen, self.offset_x, self.offset_y)
+        for wall in self.walls:
+            for block in wall:
+                block.draw(self.screen, self.offset_x, self.offset_y)
         
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
         self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
+        self.door.draw(self.screen, self.offset_x, self.offset_y)
         self.player.draw(self.screen, self.offset_x, self.offset_y)
         self.zombie.draw(self.screen, self.offset_x, self.offset_y)
 
@@ -147,8 +161,10 @@ class Game:
                 break
         
         if player.rect.colliderect(self.rect_truck):
-            print("a")
             collided_object = self.rect_truck
+
+        if player.rect.colliderect(self.door.rect) and self.door.state == "closed":
+            collided_object = self.door.rect
 
         player.move(-dx, 0)
         player.update()

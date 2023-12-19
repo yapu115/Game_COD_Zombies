@@ -6,7 +6,7 @@ class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, sprite=r"SpriteSheets\Guns\bullet.png"):
         super().__init__()
         self.sprite = sprite
-        self.image = insert_image(sprite, 15, 15)
+        self.image = insert_image(sprite, 15, 10)
         self.rect = insert_rect(self.image, x, y)
         self.on_air = False
         self.direction = "left"
@@ -15,16 +15,16 @@ class Bullet(pygame.sprite.Sprite):
         if self.on_air:
             screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
             if self.direction == "left":
-                self.rect.x -= 15
+                self.rect.x -= 5
             else:
-                self.rect.x += 15
+                self.rect.x += 5
     
     def update(self, x, y):
-        self.image = insert_image(self.sprite, 15, 15)
+        self.image = insert_image(self.sprite, 15, 10)
         self.rect.x = x
         self.rect.y = y
         
-        if self.direction == "left":
+        if self.direction == "right":
             self.image = pygame.transform.flip(self.image, True, False)
 
 
@@ -52,9 +52,9 @@ class Gun(pygame.sprite.Sprite):
         self.contador = 0
 
     def draw(self, screen, offset_x, offset_y):
-        screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
         for bullet in self.ammo:
             bullet.fire(screen, offset_x, offset_y)
+        screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
             
 
     def update(self, x, y):
