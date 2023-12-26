@@ -159,6 +159,8 @@ class Zombie(pygame.sprite.Sprite):
         self.jump_count = 0
         self.sprite = ""
         self.attack = False
+        self.life = 100
+        self.show = True
 
 
     def move(self, dx, dy): # Displaysment in x and displaysment in y
@@ -203,6 +205,7 @@ class Zombie(pygame.sprite.Sprite):
         self.sprite = sprites[sprite_index]
         self.animation_count += 1 
         self.update()
+        self.die()
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
@@ -210,3 +213,7 @@ class Zombie(pygame.sprite.Sprite):
 
     def draw(self, window, offset_x, offset_y):
         window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
+    
+    def die(self):
+        if self.life < 0:
+            self.show = False

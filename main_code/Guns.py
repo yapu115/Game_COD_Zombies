@@ -7,23 +7,31 @@ class Bullet(pygame.sprite.Sprite):
         super().__init__()
         self.sprite = sprite
         self.image = insert_image(sprite, 15, 10)
-        self.rect = insert_rect(self.image, x, y)
+        self.rect = insert_rect(self.image, 1000, 1000)
         self.on_air = False
         self.direction = "left"
+        self.x = x
+        self.y = y
+
+        self.first_second = True
+        self.hit = False
+
 
     def fire(self, screen, offset_x, offset_y):
-        if self.on_air:
+        if self.on_air :
+            if self.first_second:
+                self.rect = insert_rect(self.image, self.x, self.y)
+                self.first_second = False
             screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
             if self.direction == "left":
                 self.rect.x -= 5
             else:
                 self.rect.x += 5
-    
     def update(self, x, y):
         self.image = insert_image(self.sprite, 15, 10)
-        self.rect.x = x
-        self.rect.y = y
-        
+        self.x = x + 10
+        self.y = y + 6
+
         if self.direction == "right":
             self.image = pygame.transform.flip(self.image, True, False)
 
@@ -49,7 +57,7 @@ class Gun(pygame.sprite.Sprite):
 
         self.fire = False
 
-        self.contador = 0
+        self.contador = -1
 
     def draw(self, screen, offset_x, offset_y):
         for bullet in self.ammo:
@@ -59,9 +67,9 @@ class Gun(pygame.sprite.Sprite):
 
     def update(self, x, y):
         self.image = insert_image(self.sprite, self.width, self.height)
-
         self.rect.x = x
         self.rect.y = y
+
         if self.direction == "left":
             self.image = pygame.transform.flip(self.image, True, False)
 
@@ -80,7 +88,7 @@ class Gun(pygame.sprite.Sprite):
                 self.ammo[self.contador].on_air = True
                 self.fire = False
         except IndexError:
-            print("holaa")
+            print("se quedo sin balas")
             
 
 
@@ -88,6 +96,6 @@ class M1911(Gun):
     def __init__(self,x, y):
         self.sprite_m1911 = r"SpriteSheets\Guns\M1911.png"
         super().__init__(self.sprite_m1911, x, y, 30, 22, 5, 1)
-        self.charger_setup(7, 80)
+        self.charger_setup(100, 80)
 
 

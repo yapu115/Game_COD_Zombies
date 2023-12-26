@@ -22,38 +22,46 @@ class Game:
         self.background = funciones.insert_image(r"SpriteSheets\backgrounds\Background.jpg", WIDTH, HEIGHT)
         self.rect_background = self.background.get_rect()
 
-        self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees2.png", 3000, HEIGHT)
-        self.rect_starting_room = funciones.insert_rect(self.starting_room, 400 , 310)
+        self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees3.png", 6000, HEIGHT)
+        self.rect_starting_room = funciones.insert_rect(self.starting_room, 1300 , 310)
 
         self.clock = pygame.time.Clock()
 
         # Player
-        self.player = Player(100, HEIGHT - 96, 50, 50)
+        self.player = Player(100, HEIGHT - 10, 50, 50)
 
         # Zombies
-        self.zombie = Zombie(300, 100, 50, 50)
+        self.zombies = [Zombie(300 * i, 100, 50, 50) for i in range(5)]
         
         # Enviorment
         self.truck = funciones.insert_image(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
         self.truck = pygame.transform.scale2x(self.truck)
-        self.rect_truck = funciones.insert_rect(self.truck, -800, HEIGHT - 180)
+        self.rect_truck = funciones.insert_rect(self.truck, -500, HEIGHT - 180)
         self.truck.set_colorkey((44, 106, 138))
+
+        self.fire_truck = funciones.insert_image(r"SpriteSheets\Enviorment\Fire_Truck.png", 164 * 1.5 , 64 * 1.5)
+        self.fire_truck = pygame.transform.scale2x(self.fire_truck)
+        self.rect_fire_truck = funciones.insert_rect(self.fire_truck, 4000, HEIGHT - 125)
+        self.fire_truck.set_colorkey((255, 255, 255))
 
         # Doors
 
-        self.door = Door(300, HEIGHT - 105, 3, 3)
+        self.door = Door(900, HEIGHT - 105, 3, 3)
+        self.second_door = Door(1300, HEIGHT - 105, 3, 3)
 
         # perks
 
         self.quick_revive = funciones.insert_image(r"SpriteSheets\Perks_machines\quick_revive.png", 70, 124)
         self.quick_revive.set_colorkey((255, 255, 255))
-        self.rect_quick_revive = funciones.insert_rect(self.quick_revive, 0, HEIGHT - 96)
+        self.rect_quick_revive = funciones.insert_rect(self.quick_revive, 100, HEIGHT - 96)
         
         # Blocks
         self.block_size = 32
         #floor
         #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
-        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-100, 100)]
+        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-100, 140)]
+        for i in range(20):
+           self.floor.append(Block(887 + i * self.block_size, HEIGHT - 384, self.block_size))
 
         self.offset_x = 0
         self.offset_y = 0
@@ -63,8 +71,19 @@ class Game:
         # Walls
         self.walls = []
         for j in range(10):
-            self.walls.append([Wall_Stone(i * self.block_size, (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 60)])
+            self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 60)])
 
+        for j in range(11):
+            self.walls.append([Block( 288, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2)])
+        
+        self.stairs = []
+        for i in range(10):
+            self.stairs.append(Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
+
+        #for i in range(10):
+        #    self.stairs.append([Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size) for i in range(10)])
+
+        # Hacer las paredes por separado y despues un append para unirlas todas en self.walls
         self.outside_walls = []
 
         self.upstairs_walls = []
@@ -91,16 +110,17 @@ class Game:
 
                     if event.key == pygame.K_e:
                         if self.player.rect.colliderect((self.door.rect.x - 30, self.door.rect.y, self.door.rect.width, self.door.rect.height)):
-                            print("aaa")
                             if self.door.state == "opened":
                                 self.door.state = "closed"
                             else:
                                 self.door.state =  "opened"
 
             self.player.loop(FPS)
-            self.zombie.loop(FPS)
-            self.handle_move(self.player, self.floor)
-            self.handle_zombie_move(self.zombie, self.floor)
+            self.handle_move(self.player, self.floor, self.stairs)
+            for zombie in self.zombies:
+                zombie.loop(FPS)
+                self.handle_zombie_move(zombie, self.floor, self.stairs)
+            
 
             if ((self.player.rect.right - self.offset_x >= WIDTH - self.scroll_area_width) and self.player.x_vel > 0) or (
                 (self.player.rect.left - self.offset_x <= self.scroll_area_width) and self.player.x_vel < 0):
@@ -116,27 +136,40 @@ class Game:
             
             self.draw()
 
+            x, y = pygame.mouse.get_pos()
+            #print(x, y)
         pygame.quit()
 
     def draw(self):
         self.screen.blit(self.background, self.rect_background)
         self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
-        for obj in self.floor:
-            obj.draw(self.screen, self.offset_x, self.offset_y)        
         for wall in self.walls:
             for block in wall:
                 block.draw(self.screen, self.offset_x, self.offset_y)
+        for obj in self.floor:
+            obj.draw(self.screen, self.offset_x, self.offset_y)        
+        for stair in self.stairs:
+            stair.draw(self.screen, self.offset_x, self.offset_y)
         
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
+        self.screen.blit(self.fire_truck, (self.rect_fire_truck.x - self.offset_x, self.rect_fire_truck.y - self.offset_y))
         self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
         self.door.draw(self.screen, self.offset_x, self.offset_y)
+        #self.second_door.draw(self.screen, self.offset_x, self.offset_y)
+                
+        
         self.player.draw(self.screen, self.offset_x, self.offset_y)
-        self.zombie.draw(self.screen, self.offset_x, self.offset_y)
+        for zombie in self.zombies:
+            zombie.die()
+            if zombie.show:
+                zombie.draw(self.screen, self.offset_x, self.offset_y)
+            else:
+                self.zombies.remove(zombie)
 
         pygame.display.flip()
 
 
-    def handle_vertical_condition(self, player, objects, dy):
+    def handle_vertical_condition(self, player, objects, stairs, dy):
         collided_objects = []
         for obj in objects:
             if pygame.sprite.collide_mask(player, obj): # Si chocan los dos rects
@@ -147,7 +180,12 @@ class Game:
                     player.rect.top = obj.rect.bottom # Si el personaje está saltando no lo sobrepasa
                     player.hit_head()
 
-            collided_objects.append(obj)
+                collided_objects.append(obj)
+
+        for stair in stairs:
+            if player.rect.colliderect(stair):
+                player.rect.bottom = stair.rect.top
+                player.landed()            
             
         return collided_objects
 
@@ -159,9 +197,12 @@ class Game:
             if pygame.sprite.collide_mask(player, obj):
                 collided_object = obj
                 break
-        
+
         if player.rect.colliderect(self.rect_truck):
             collided_object = self.rect_truck
+
+        if player.rect.colliderect(self.rect_fire_truck):
+            collided_object = self.rect_fire_truck
 
         if player.rect.colliderect(self.door.rect) and self.door.state == "closed":
             collided_object = self.door.rect
@@ -170,7 +211,7 @@ class Game:
         player.update()
         return collided_object
 
-    def handle_move(self, player, objects):
+    def handle_move(self, player, objects, stairs):
         keys = pygame.key.get_pressed()
 
         player.x_vel = 0
@@ -183,7 +224,7 @@ class Game:
         if keys[pygame.K_d] and not collide_right: 
             player.move_right(PLAYER_VEL)
 
-        if keys[pygame.K_LSHIFT]:
+        if keys[pygame.K_LSHIFT] :
             player.looking_up = True
             player.angle = 45
         else:
@@ -196,9 +237,9 @@ class Game:
             player.looking_down = False
 
 
-        self.handle_vertical_condition(self.player, objects, player.y_vel)
+        self.handle_vertical_condition(player, objects, stairs, player.y_vel)
     
-    def handle_zombie_move(self, zombie, objects):
+    def handle_zombie_move(self, zombie, objects, stairs):
         #for zombie in zombies:
             if zombie.rect.colliderect(self.player.rect):
                 pass
@@ -209,8 +250,19 @@ class Game:
                     zombie.move_right(1)
                 pass
 
-            self.handle_vertical_condition(zombie, objects, zombie.y_vel)
+            self.handle_vertical_condition(zombie, objects, stairs, zombie.y_vel)
+            self.zombies_damage(zombie, self.player)
 
+    def zombies_damage(self, zombie, player):
+        #try:
+            for bullet in player.gun.ammo:
+                if zombie.rect.colliderect(bullet.rect):
+                    player.gun.ammo.remove(bullet)
+                    zombie.life -= 30
+                    print("disparo acertado")
+                    print(zombie.life)
+                    #except:
+         #   print("a????????")
 
     
 new_game = Game()
