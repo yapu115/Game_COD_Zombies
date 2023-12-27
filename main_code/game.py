@@ -27,11 +27,20 @@ class Game:
 
         self.clock = pygame.time.Clock()
 
+        # HUD
+        self.blood_points = funciones.insert_image(r"SpriteSheets\HUD\Points_blood.png", 34, 10)
+        self.blood_points = pygame.transform.scale2x(self.blood_points)
+        self.blood_points_rect = funciones.insert_rect(self.blood_points, 50, HEIGHT - 100)
         # Player
         self.player = Player(100, HEIGHT - 10, 50, 50)
 
+        
+        #font_input = pygame.font.SysFont("Arial", TAMAÑO_LETRA)
+
+        self.font = pygame.font.SysFont("calibri", 25)
+
         # Zombies
-        self.zombies = [Zombie(300 * i, 100, 50, 50) for i in range(5)]
+        self.zombies = [Zombie(300 * i, 100, 50, 50) for i in range(30)]
         
         # Enviorment
         self.truck = funciones.insert_image(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
@@ -74,11 +83,11 @@ class Game:
             self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 60)])
 
         for j in range(11):
-            self.walls.append([Block( 288, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2)])
+            self.floor.append(Block(888, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
         
         self.stairs = []
-        for i in range(10):
-            self.stairs.append(Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
+        for i in range(23):
+            self.stairs.append(Block(1870 + (-i * self.block_size * 0.5), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
 
         #for i in range(10):
         #    self.stairs.append([Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size) for i in range(10)])
@@ -110,10 +119,9 @@ class Game:
 
                     if event.key == pygame.K_e:
                         if self.player.rect.colliderect((self.door.rect.x - 30, self.door.rect.y, self.door.rect.width, self.door.rect.height)):
-                            if self.door.state == "opened":
-                                self.door.state = "closed"
-                            else:
-                                self.door.state =  "opened"
+                            if self.door.state == "closed" and self.player.score >= 750:
+                                self.door.state = "opened"
+                                self.player.score -= 750
 
             self.player.loop(FPS)
             self.handle_move(self.player, self.floor, self.stairs)
@@ -165,6 +173,10 @@ class Game:
                 zombie.draw(self.screen, self.offset_x, self.offset_y)
             else:
                 self.zombies.remove(zombie)
+
+        score_text = self.font.render("{0}".format(self.player.score), True, (255, 255, 255))
+        self.screen.blit(self.blood_points, self.blood_points_rect)
+        self.screen.blit(score_text, self.blood_points_rect)
 
         pygame.display.flip()
 
@@ -226,13 +238,13 @@ class Game:
 
         if keys[pygame.K_LSHIFT] :
             player.looking_up = True
-            player.angle = 45
+            player.angle = 40
         else:
             player.looking_up = False
 
         if keys[pygame.K_RSHIFT]:
             player.looking_down = True
-            player.angle = -45
+            player.angle = -40
         else:
             player.looking_down = False
 
@@ -261,6 +273,8 @@ class Game:
                     zombie.life -= 30
                     print("disparo acertado")
                     print(zombie.life)
+                    player.score += 20
+                    print(player.score)
                     #except:
          #   print("a????????")
 

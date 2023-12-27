@@ -21,6 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
+        self.score = 500
 
         self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
         self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
@@ -112,6 +113,13 @@ class Player(pygame.sprite.Sprite):
             if self.direction == "right":
                 self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
                 self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
+                
+                self.gun.image = pygame.transform.rotate(self.gun.image, self.angle)
+                self.gun.rect.y = self.front_arm_rect.y - 50
+                self.gun.rect.x = self.front_arm_rect.x + 25
+
+                self.gun.looking_up = True
+
             else:
                 self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
                 self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle)
