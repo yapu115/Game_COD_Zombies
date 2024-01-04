@@ -60,7 +60,7 @@ class Player(pygame.sprite.Sprite):
             self.animation_count = 0
 
     def loop(self, fps):
-        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
+        self.y_vel += min(2, (self.fall_count / fps) * self.GRAVITY * 10) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
         self.move(self.x_vel, self.y_vel)
 
         self.fall_count += 1
@@ -123,6 +123,12 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
                 self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle)
+                
+                self.gun.image = pygame.transform.rotate(self.gun.image, -self.angle)
+                self.gun.rect.y = self.front_arm_rect.y - 50
+                self.gun.rect.x = self.front_arm_rect.x - 15
+
+                self.gun.looking_up = True
             self.front_arm_rect.y = self.rect.y  + 10
             self.back_arm_rect.y = self.rect.y  + 10
 
@@ -169,6 +175,9 @@ class Zombie(pygame.sprite.Sprite):
         self.attack = False
         self.life = 100
         self.show = True
+
+        self.looking_down = True
+        self.looking_up = True
 
 
     def move(self, dx, dy): # Displaysment in x and displaysment in y

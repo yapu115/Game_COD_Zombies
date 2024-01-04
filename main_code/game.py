@@ -8,7 +8,7 @@ from Characters import Player, Zombie
 import funciones
 from constants import *
 from Objects import *
-from enviorment import Door
+from enviorment import Door, Resource
 
 
 class Game:
@@ -32,15 +32,15 @@ class Game:
         self.blood_points = pygame.transform.scale2x(self.blood_points)
         self.blood_points_rect = funciones.insert_rect(self.blood_points, 50, HEIGHT - 100)
         # Player
-        self.player = Player(100, HEIGHT - 10, 50, 50)
+        self.player = Player(100, HEIGHT - 20, 50, 50)
 
         
         #font_input = pygame.font.SysFont("Arial", TAMAÑO_LETRA)
 
-        self.font = pygame.font.SysFont("calibri", 25)
+        self.font = pygame.font.SysFont("inkfree", 25)
 
         # Zombies
-        self.zombies = [Zombie(300 * i, 100, 50, 50) for i in range(30)]
+        self.zombies = [Zombie(300 + (100 * i), 100, 50, 50) for i in range(10)]
         
         # Enviorment
         self.truck = funciones.insert_image(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
@@ -53,10 +53,27 @@ class Game:
         self.rect_fire_truck = funciones.insert_rect(self.fire_truck, 4000, HEIGHT - 125)
         self.fire_truck.set_colorkey((255, 255, 255))
 
+        # Kitchen
+        self.kitchen_resources = []
+        
+        self.kitchen_down_furniture = Resource(350, 65, 1250, HEIGHT - 65, r"SpriteSheets\Enviorment\furniture.png")
+        self.kitchen_up_furniture = Resource(350, 60, 1250, HEIGHT - 170, r"SpriteSheets\Enviorment\furniture2.png")
+        self.refrigerator = Resource(50, 135, 1490, HEIGHT - 98, r"SpriteSheets\Enviorment\Refrigerator.png")
+
+        self.kitchen_resources.append(self.kitchen_down_furniture)
+        self.kitchen_resources.append(self.kitchen_up_furniture)
+        self.kitchen_resources.append(self.refrigerator)
         # Doors
 
-        self.door = Door(900, HEIGHT - 105, 3, 3)
-        self.second_door = Door(1300, HEIGHT - 105, 3, 3)
+        self.doors = []
+
+        door_kitchen = Door(900, HEIGHT - 105)        
+        door_living = Door(1800, HEIGHT - 105)
+        door_outside = Door(3000, HEIGHT - 105)
+        
+        self.doors.append(door_kitchen)
+        self.doors.append(door_living)
+        self.doors.append(door_outside)
 
         # perks
 
@@ -69,25 +86,40 @@ class Game:
         #floor
         #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
         self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-100, 140)]
-        for i in range(20):
+
+        for i in range(40):
            self.floor.append(Block(887 + i * self.block_size, HEIGHT - 384, self.block_size))
+        
+        for i in range(19):
+           self.floor.append(Block(2400 + i * self.block_size, HEIGHT - 384, self.block_size))
+
 
         self.offset_x = 0
         self.offset_y = 0
         self.scroll_area_width = 200
         self.scroll_area_height = 150
 
-        # Walls
-        self.walls = []
-        for j in range(10):
-            self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 60)])
-
         for j in range(11):
             self.floor.append(Block(888, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
         
+        for j in range(11):
+            self.floor.append(Block(1785, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
+
+        # Walls
+        self.walls = []
+        for j in range(10):
+            self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 75)])
+
+        
         self.stairs = []
         for i in range(23):
-            self.stairs.append(Block(1870 + (-i * self.block_size * 0.5), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
+            self.stairs.append(Block(2500 + (-i * self.block_size * 0.5), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
+        
+
+        self.stair_floor = []
+        for i in range(8):
+           self.stair_floor.append(Block(2180 + i * self.block_size, HEIGHT - 384, self.block_size))
+
 
         #for i in range(10):
         #    self.stairs.append([Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size) for i in range(10)])
@@ -103,7 +135,7 @@ class Game:
     def run(self):
         running = True
         while running:
-            self.clock.tick(FPS)
+            self.clock.tick(60)
             events_list = pygame.event.get()
             for event in events_list:
                 if event.type == pygame.QUIT:
@@ -117,11 +149,13 @@ class Game:
                     if event.key == pygame.K_f:
                         self.player.gun.fire = True
 
-                    if event.key == pygame.K_e:
-                        if self.player.rect.colliderect((self.door.rect.x - 30, self.door.rect.y, self.door.rect.width, self.door.rect.height)):
-                            if self.door.state == "closed" and self.player.score >= 750:
-                                self.door.state = "opened"
-                                self.player.score -= 750
+                    for door in self.doors:
+                        if (self.player.rect.colliderect((door.rect.x - 30, door.rect.y, door.rect.width, door.rect.height))) or (
+                        self.player.rect.colliderect((door.rect.x + 30, door.rect.y, door.rect.width, door.rect.height))):
+                            if event.key == pygame.K_e:
+                                if door.state == "closed" and self.player.score >= 550: #cambiar 750 por una variable propia de las doors
+                                    door.state = "opened"
+                                    self.player.score -= 550
 
             self.player.loop(FPS)
             self.handle_move(self.player, self.floor, self.stairs)
@@ -159,10 +193,22 @@ class Game:
         for stair in self.stairs:
             stair.draw(self.screen, self.offset_x, self.offset_y)
         
+
+        for stair_floor_block in self.stair_floor:
+            stair_floor_block.draw(self.screen, self.offset_x, self.offset_y)
+
+
+
+
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
         self.screen.blit(self.fire_truck, (self.rect_fire_truck.x - self.offset_x, self.rect_fire_truck.y - self.offset_y))
+        
+        for furniture in self.kitchen_resources:
+            furniture.draw(self.screen, self.offset_x, self.offset_y)
+        
         self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
-        self.door.draw(self.screen, self.offset_x, self.offset_y)
+        for door in self.doors:
+            door.draw(self.screen, self.offset_x, self.offset_y)
         #self.second_door.draw(self.screen, self.offset_x, self.offset_y)
                 
         
@@ -195,9 +241,17 @@ class Game:
                 collided_objects.append(obj)
 
         for stair in stairs:
-            if player.rect.colliderect(stair):
-                player.rect.bottom = stair.rect.top
-                player.landed()            
+            if player.rect.colliderect(stair.rect):
+                if player.looking_down or player.looking_up:
+                    player.rect.bottom = stair.rect.top
+                    player.landed()            
+
+        for stair_floor_block in self.stair_floor:
+            if not player.looking_down and not player.looking_up:
+                if player.rect.colliderect(stair_floor_block.rect):
+                    player.rect.bottom = stair_floor_block.rect.top
+                    player.landed()
+
             
         return collided_objects
 
@@ -216,8 +270,9 @@ class Game:
         if player.rect.colliderect(self.rect_fire_truck):
             collided_object = self.rect_fire_truck
 
-        if player.rect.colliderect(self.door.rect) and self.door.state == "closed":
-            collided_object = self.door.rect
+        for door in self.doors:
+            if player.rect.colliderect(door.rect) and door.state == "closed":
+                collided_object = door.rect
 
         player.move(-dx, 0)
         player.update()
@@ -271,10 +326,8 @@ class Game:
                 if zombie.rect.colliderect(bullet.rect):
                     player.gun.ammo.remove(bullet)
                     zombie.life -= 30
-                    print("disparo acertado")
                     print(zombie.life)
                     player.score += 20
-                    print(player.score)
                     #except:
          #   print("a????????")
 
