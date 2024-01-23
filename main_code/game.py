@@ -8,7 +8,7 @@ from Characters import Player, Zombie
 import funciones
 from constants import *
 from Objects import *
-from enviorment import Door, Resource
+from enviorment import Door, BunkerDoor, Resource
 
 
 class Game:
@@ -25,6 +25,9 @@ class Game:
         self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees3.png", 6000, HEIGHT)
         self.rect_starting_room = funciones.insert_rect(self.starting_room, 1300 , 310)
 
+        self.bunker_one = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_one_bg.png", 1812, 500)
+        self.rect_bunker_one = funciones.insert_rect(self.bunker_one, 70 , HEIGHT + 250)
+
         self.clock = pygame.time.Clock()
 
         # HUD
@@ -39,13 +42,14 @@ class Game:
 
         self.font = pygame.font.SysFont("inkfree", 25)
 
+        self.player_stage = "cero_floor"
         # Zombies
-        self.zombies = [Zombie(300 + (100 * i), 100, 50, 50) for i in range(10)]
+        self.zombies = [Zombie(300 + (100 * i), 100, 50, 50) for i in range(1)]
         
         # Enviorment
         self.truck = funciones.insert_image(r"SpriteSheets\Enviorment\Truck.png", 369, 160)
         self.truck = pygame.transform.scale2x(self.truck)
-        self.rect_truck = funciones.insert_rect(self.truck, -500, HEIGHT - 180)
+        self.rect_truck = funciones.insert_rect(self.truck, -1400, HEIGHT - 180)
         self.truck.set_colorkey((44, 106, 138))
 
         self.fire_truck = funciones.insert_image(r"SpriteSheets\Enviorment\Fire_Truck.png", 164 * 1.5 , 64 * 1.5)
@@ -70,10 +74,15 @@ class Game:
         door_kitchen = Door(900, HEIGHT - 105)        
         door_living = Door(1800, HEIGHT - 105)
         door_outside = Door(3000, HEIGHT - 105)
+        door_upstairs = Door(1800, HEIGHT - 460)
+
+        door_bunker = BunkerDoor(-200, HEIGHT - 110)
         
         self.doors.append(door_kitchen)
         self.doors.append(door_living)
         self.doors.append(door_outside)
+        self.doors.append(door_upstairs)
+        self.doors.append(door_bunker)
 
         # perks
 
@@ -85,7 +94,8 @@ class Game:
         self.block_size = 32
         #floor
         #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
-        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-100, 140)]
+        self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-3, 140)]
+
 
         for i in range(40):
            self.floor.append(Block(887 + i * self.block_size, HEIGHT - 384, self.block_size))
@@ -93,6 +103,8 @@ class Game:
         for i in range(19):
            self.floor.append(Block(2400 + i * self.block_size, HEIGHT - 384, self.block_size))
 
+        for i in range(-10, 140):
+            self.floor.append(Block(i * self.block_size, HEIGHT + 500, self.block_size))
 
         self.offset_x = 0
         self.offset_y = 0
@@ -107,7 +119,7 @@ class Game:
 
         # Walls
         self.walls = []
-        for j in range(10):
+        for j in range(25):
             self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 75)])
 
         
@@ -115,11 +127,18 @@ class Game:
         for i in range(23):
             self.stairs.append(Block(2500 + (-i * self.block_size * 0.5), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
         
+        for i in range(23):
+            self.stairs.append(Block(1200 + (i * self.block_size * 0.5), HEIGHT - (self.block_size * 13) - (i * self.block_size * 0.5), self.block_size))
+        
+        for i in range(34):
+            self.stairs.append(Block(210 + (-i * self.block_size * 0.5), HEIGHT + 500 - (i * self.block_size * 0.5), self.block_size))
 
         self.stair_floor = []
         for i in range(8):
            self.stair_floor.append(Block(2180 + i * self.block_size, HEIGHT - 384, self.block_size))
 
+        for i in range(8):
+            self.stair_floor.append(Block(-300 + i * self.block_size, HEIGHT - 32, self.block_size))
 
         #for i in range(10):
         #    self.stairs.append([Block(1500 + (i * self.block_size), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size) for i in range(10)])
@@ -130,6 +149,7 @@ class Game:
         self.upstairs_walls = []
 
         self.bunker_walls = []
+
 
 
     def run(self):
@@ -172,19 +192,27 @@ class Game:
             if ((self.player.rect.top - self.offset_y >= HEIGHT - self.scroll_area_height) and self.player.y_vel > 0):
                 self.offset_y += self.player.y_vel * 3
 
-            #jump
-            elif (self.player.rect.bottom - self.offset_y <= self.scroll_area_height  and self.player.y_vel < 0):
-                self.offset_y += self.player.y_vel 
-            
+            # up
+            elif (self.player.rect.bottom - self.offset_y <= self.scroll_area_height):
+                if self.player.y_vel < 0:
+                    self.offset_y += self.player.y_vel 
+                elif self.player.x_vel > 0:
+                    self.offset_y -= self.player.x_vel
+                else:
+                    self.offset_y += self.player.x_vel
+
             self.draw()
 
             x, y = pygame.mouse.get_pos()
+            
             #print(x, y)
         pygame.quit()
 
     def draw(self):
         self.screen.blit(self.background, self.rect_background)
         self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
+        self.screen.blit(self.bunker_one, (self.rect_bunker_one.x - self.offset_x, self.rect_bunker_one.y - self.offset_y))
+
         for wall in self.walls:
             for block in wall:
                 block.draw(self.screen, self.offset_x, self.offset_y)
@@ -279,6 +307,14 @@ class Game:
         return collided_object
 
     def handle_move(self, player, objects, stairs):
+        
+        if player.rect.y < 200 and player.rect.y > -190:
+            player.sector = "second_floor"
+        elif player.rect.y < 520 and player.rect.y > 200:
+            player.sector = "start"
+        elif player.rect.y < 1000 and player.rect.y > 520:
+            player.sector = "underground"
+
         keys = pygame.key.get_pressed()
 
         player.x_vel = 0
@@ -296,26 +332,29 @@ class Game:
             player.angle = 40
         else:
             player.looking_up = False
-
-        if keys[pygame.K_RSHIFT]:
-            player.looking_down = True
-            player.angle = -40
-        else:
-            player.looking_down = False
+            if keys[pygame.K_RSHIFT]:
+                player.looking_down = True
+                player.angle = -30
+            else:
+                player.looking_down = False
 
 
         self.handle_vertical_condition(player, objects, stairs, player.y_vel)
     
     def handle_zombie_move(self, zombie, objects, stairs):
         #for zombie in zombies:
-            if zombie.rect.colliderect(self.player.rect):
-                pass
-            else:
-                if zombie.rect.x > self.player.rect.x:
-                    zombie.move_left(1)
-                else:
-                    zombie.move_right(1)
-                pass
+            if zombie.rect.y < 165 and zombie.rect.y > -190:
+                zombie.sector = "second_floor"
+            elif zombie.rect.y < 520 and zombie.rect.y > 140:
+                zombie.sector = "start"
+            elif zombie.rect.y < 1000 and zombie.rect.y > 520:
+                zombie.sector = "underground"
+            
+            print(zombie.rect.y, self.player.rect.y )
+
+            zombie.follow_player(self.player)
+                
+                
 
             self.handle_vertical_condition(zombie, objects, stairs, zombie.y_vel)
             self.zombies_damage(zombie, self.player)
@@ -325,7 +364,7 @@ class Game:
             for bullet in player.gun.ammo:
                 if zombie.rect.colliderect(bullet.rect):
                     player.gun.ammo.remove(bullet)
-                    zombie.life -= 30
+                    zombie.life -= player.gun.bullet_damage
                     print(zombie.life)
                     player.score += 20
                     #except:

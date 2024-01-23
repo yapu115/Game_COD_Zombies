@@ -11,6 +11,7 @@ class Bullet(pygame.sprite.Sprite):
         self.on_air = False
         self.direction = "left"
         self.looking_up = False
+        self.looking_down = False
         self.x = x
         self.y = y
 
@@ -20,35 +21,67 @@ class Bullet(pygame.sprite.Sprite):
         self.hit = False
 
 
-    def fire(self, screen, offset_x, offset_y):
+    def fire(self, screen, offset_x, offset_y, fire_velocity):
         if self.on_air :
             if self.first_second:
                 self.rect = insert_rect(self.image, self.x, self.y)
-                if self.looking_up:
-                    self.image = pygame.transform.rotate(self.image, self.angle)
                 self.first_second = False
             screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
-            if self.direction == "left":    
-                self.rect.x -= 5
+            if self.direction == "left":
+                if self.looking_up:
+                    self.rect.x -= fire_velocity 
+                    self.rect.y -= fire_velocity 
+                elif self.looking_down:
+                    self.rect.x -= fire_velocity 
+                    self.rect.y += fire_velocity 
+                else:
+                    self.rect.x -= fire_velocity
             else:
                 if self.looking_up:
-                    self.rect.x += 2.5
-                    self.rect.y -= 2.5
+                    self.rect.x += fire_velocity 
+                    self.rect.y -= fire_velocity 
+                elif self.looking_down:
+                    self.rect.x += fire_velocity 
+                    self.rect.y += fire_velocity 
                 else:
-                    self.rect.x += 5
+                    self.rect.x += fire_velocity
+
     def update(self, x, y):
         self.image = insert_image(self.sprite, 15, 10)
-        self.x = x + 10
-        self.y = y + 6
-
+        
+        x_sum = 0
+        y_sum = 0
+        
         if self.direction == "right":
             self.image = pygame.transform.flip(self.image, True, False)
+            x_sum = 10
+            y_sum = 6
+            if self.looking_up:
+                self.image = pygame.transform.rotate(self.image, self.angle)
+                y_sum = -30
+            elif self.looking_down:
+                self.image = pygame.transform.rotate(self.image, -self.angle)
+                y_sum = 38
+                x_sum = 30
+        else:
+            x_sum = 15
+            y_sum = 6
+            if self.looking_up:
+                self.image = pygame.transform.rotate(self.image, -self.angle)
+                y_sum = -40
+            elif self.looking_down:
+                self.image = pygame.transform.rotate(self.image, self.angle)
+                y_sum = 40
+                x_sum = -10
+        
+                 
 
-
+        self.x = x + x_sum
+        self.y = y + y_sum
 
 class Gun(pygame.sprite.Sprite):
 
-    def __init__(self, sprite, x, y, width, height, bullet_dmg, velocity_fire):
+    def __init__(self, sprite, x, y, width, height, bullet_dmg, fire_velocity):
         super().__init__()
         self.sprite = sprite
         self.image = insert_image(self.sprite, width, height)
@@ -62,17 +95,18 @@ class Gun(pygame.sprite.Sprite):
         self.ammo = []
 
         self.bullet_damage = bullet_dmg
-        self.velocity_fire = velocity_fire
+        self.fire_velocity = fire_velocity
 
         self.fire = False
 
         self.contador = -1
 
         self.looking_up = False
+        self.looking_down = False
 
     def draw(self, screen, offset_x, offset_y):
         for bullet in self.ammo:
-            bullet.fire(screen, offset_x, offset_y)
+            bullet.fire(screen, offset_x, offset_y, self.fire_velocity)
         screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
             
 
@@ -91,6 +125,13 @@ class Gun(pygame.sprite.Sprite):
 
                 if self.looking_up:
                     bullet.looking_up = True
+                else:
+                    bullet.looking_up = False
+
+                if self.looking_down:
+                    bullet.looking_down = True
+                else:
+                    bullet.looking_down = False
 
     def charger_setup(self, charger_ammo, total_chargers):
         self.ammo = [Bullet(self.rect.x, self.rect.y) for i in range(charger_ammo)]
@@ -109,7 +150,7 @@ class Gun(pygame.sprite.Sprite):
 class M1911(Gun):
     def __init__(self,x, y):
         self.sprite_m1911 = r"SpriteSheets\Guns\M1911.png"
-        super().__init__(self.sprite_m1911, x, y, 30, 22, 5, 1)
+        super().__init__(self.sprite_m1911, x, y, 30, 22, 5, 5)
         self.charger_setup(100, 80)
 
 

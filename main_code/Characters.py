@@ -21,7 +21,9 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
-        self.score = 500
+        self.score = 1500
+
+        self.sector = "start"
 
         self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
         self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
@@ -60,7 +62,7 @@ class Player(pygame.sprite.Sprite):
             self.animation_count = 0
 
     def loop(self, fps):
-        self.y_vel += min(2, (self.fall_count / fps) * self.GRAVITY * 10) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY ) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
         self.move(self.x_vel, self.y_vel)
 
         self.fall_count += 1
@@ -92,12 +94,14 @@ class Player(pygame.sprite.Sprite):
         self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
         self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
 
+
         if self.direction == "right":
             self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 50)
             self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 48, self.rect.y + 54)
 
             self.gun.direction = "right"
-            self.gun.update(self.front_arm_rect.x + 35, self.front_arm_rect.y - 10)
+            self.gun.update(self.front_arm_rect.x + 33, self.front_arm_rect.y - 10)
+
         else: 
             self.front_arm = pygame.transform.flip(self.front_arm, True, False)
             self.back_arm = pygame.transform.flip(self.back_arm, True, False)
@@ -106,10 +110,10 @@ class Player(pygame.sprite.Sprite):
             self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 8, self.rect.y + 53)
 
             self.gun.direction = "left"
-            self.gun.update(self.front_arm_rect.x - 20, self.front_arm_rect.y - 10)
-
+            self.gun.update(self.front_arm_rect.x - 17, self.front_arm_rect.y - 10)
         
-        if self.looking_up:                         # Esto se puede automatizar con parametros de entrada como el self.angulo para que on hayan tantos ifs
+
+        if self.looking_up:
             if self.direction == "right":
                 self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
                 self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
@@ -132,15 +136,27 @@ class Player(pygame.sprite.Sprite):
             self.front_arm_rect.y = self.rect.y  + 10
             self.back_arm_rect.y = self.rect.y  + 10
 
-        elif self.looking_down:
-            if self.direction == "right":
-                self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
-                self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
-            else:
-                self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
-                self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle)
-               
+        else:
+            self.gun.looking_up = False
+            if self.looking_down:
+                if self.direction == "right":
+                    self.back_arm = pygame.transform.rotate(self.back_arm, self.angle)
+                    self.front_arm = pygame.transform.rotate(self.front_arm, self.angle)
 
+                    self.gun.image = pygame.transform.rotate(self.gun.image, self.angle)
+                    self.gun.rect.y = self.front_arm_rect.y + 8
+                    self.gun.rect.x = self.front_arm_rect.x + 32
+                else:
+                    self.back_arm = pygame.transform.rotate(self.back_arm, -self.angle)
+                    self.front_arm = pygame.transform.rotate(self.front_arm, -self.angle) 
+                    
+                    self.gun.image = pygame.transform.rotate(self.gun.image, -self.angle)
+                    self.gun.rect.y = self.front_arm_rect.y + 8
+                    self.gun.rect.x = self.front_arm_rect.x - 20
+                
+                self.gun.looking_down = True
+            else:
+                self.gun.looking_down = False
 
     def update(self):
         self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
@@ -176,8 +192,12 @@ class Zombie(pygame.sprite.Sprite):
         self.life = 100
         self.show = True
 
-        self.looking_down = True
-        self.looking_up = True
+        self.sector = "start"
+
+        self.looking_down = False
+        self.looking_up = False
+
+        self.using_stairs = False
 
 
     def move(self, dx, dy): # Displaysment in x and displaysment in y
@@ -211,6 +231,41 @@ class Zombie(pygame.sprite.Sprite):
     def hit_head(self):
         self.fall_count = 0
         self.y_vel *= -1 
+
+    def go_upstairs(self, stairs_x, left_stairs, player):
+        if player.rect.y > self.rect.y + 20:
+            pass
+        else:
+            if left_stairs:
+                if self.rect.x > stairs_x or self.using_stairs:
+                    self.move_left(5)
+                    self.looking_up = True
+                    self.using_stairs = True
+                else:
+                    self.looking_up = False 
+                    if not self.using_stairs:
+                        self.move_right(5)
+            else:
+                pass
+
+    def follow_player(self, player):
+        if self.rect.colliderect(player.rect):
+            pass
+        else:
+            if (self.sector != player.sector):
+                match(self.sector):
+                    case "start":
+                        match(player.sector):
+                            case "second_floor":
+                                self.go_upstairs(2520, True, player)
+            else:
+                self.using_stairs = False
+                self.looking_down = False
+                self.looking_up = False
+                if self.rect.x > player.rect.x:
+                    self.move_left(5)
+                else:
+                    self.move_right(5)
 
     def update_sprite(self):
         sprite_sheet = "walk"

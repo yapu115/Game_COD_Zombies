@@ -39,3 +39,30 @@ class Door(Resource):
     def draw(self, screen, offset_x, offset_y):
         self.update()
         screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
+
+# Combinar ambas puertas en una sola
+        
+        
+class BunkerDoor(Resource):
+    def __init__(self, x, y):
+        super().__init__(154, 128, x, y, r"SpriteSheets\doors\closed_bunker_door.png")
+        self.x = x
+        self.y = y
+        self.width = 77 * 2.5
+        self.height = 64 * 2.5
+
+        self.state = "closed"
+        self.closed = r"SpriteSheets\doors\closed_bunker_door.png"
+        self.opened = r"SpriteSheets\doors\opened_bunker_door.png"
+        self.image = insert_image(self.closed, self.width, self.height)
+        self.rect = insert_rect(self.image, x, y)
+    
+    def update(self): 
+        if self.state == "opened":
+            self.image = insert_image(self.opened, self.width, self.height)
+        elif self.state == "closed":
+            self.image = insert_image(self.closed, self.width, self.height)
+
+    def draw(self, screen, offset_x, offset_y):
+        self.update()
+        screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
