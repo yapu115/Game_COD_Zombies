@@ -22,11 +22,20 @@ class Game:
         self.background = funciones.insert_image(r"SpriteSheets\backgrounds\Background.jpg", WIDTH, HEIGHT)
         self.rect_background = self.background.get_rect()
 
-        self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees3.png", 6000, HEIGHT)
-        self.rect_starting_room = funciones.insert_rect(self.starting_room, 1300 , 310)
+        self.starting_room = funciones.insert_image(r"SpriteSheets\backgrounds\trees3.png", 6500, 1000)
+        self.rect_starting_room = funciones.insert_rect(self.starting_room, 1300 , 150)
 
-        self.bunker_one = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_one_bg.png", 1812, 500)
-        self.rect_bunker_one = funciones.insert_rect(self.bunker_one, 70 , HEIGHT + 250)
+        self.bunker_one = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_one_bg.png", 1812, 550)
+        self.rect_bunker_one = funciones.insert_rect(self.bunker_one, 70 , HEIGHT + 225)
+
+        self.bunker_two = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_two_bg.png", 682, 550)
+        self.rect_bunker_two = funciones.insert_rect(self.bunker_two, -1250 , HEIGHT + 260)
+
+        self.bunker_three = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_three_bg.png", 860, 550)
+        self.rect_bunker_three = funciones.insert_rect(self.bunker_three, 1360 , HEIGHT + 240)
+
+        self.bunker_four = funciones.insert_image(r"SpriteSheets\backgrounds\bunker_four_bg.png", 1000, 650)
+        self.rect_bunker_four = funciones.insert_rect(self.bunker_four, 2400 , HEIGHT + 220)
 
         self.clock = pygame.time.Clock()
 
@@ -35,14 +44,11 @@ class Game:
         self.blood_points = pygame.transform.scale2x(self.blood_points)
         self.blood_points_rect = funciones.insert_rect(self.blood_points, 50, HEIGHT - 100)
         # Player
-        self.player = Player(100, HEIGHT - 20, 50, 50)
+        self.player = Player(400, HEIGHT - 20, 50, 50)
 
         
-        #font_input = pygame.font.SysFont("Arial", TAMAÑO_LETRA)
-
         self.font = pygame.font.SysFont("inkfree", 25)
 
-        self.player_stage = "cero_floor"
         # Zombies
         self.zombies = [Zombie(300 + (100 * i), 100, 50, 50) for i in range(1)]
         
@@ -58,15 +64,28 @@ class Game:
         self.fire_truck.set_colorkey((255, 255, 255))
 
         # Kitchen
-        self.kitchen_resources = []
+        self.enviorment = []
         
         self.kitchen_down_furniture = Resource(350, 65, 1250, HEIGHT - 65, r"SpriteSheets\Enviorment\furniture.png")
         self.kitchen_up_furniture = Resource(350, 60, 1250, HEIGHT - 170, r"SpriteSheets\Enviorment\furniture2.png")
         self.refrigerator = Resource(50, 135, 1490, HEIGHT - 98, r"SpriteSheets\Enviorment\Refrigerator.png")
 
-        self.kitchen_resources.append(self.kitchen_down_furniture)
-        self.kitchen_resources.append(self.kitchen_up_furniture)
-        self.kitchen_resources.append(self.refrigerator)
+        self.enviorment.append(self.kitchen_down_furniture)
+        self.enviorment.append(self.kitchen_up_furniture)
+        self.enviorment.append(self.refrigerator)
+
+        # Living
+
+        coat_rack = Resource(192, 144, 1500, HEIGHT - 460, r"SpriteSheets\Enviorment\coat_rack.png")
+        couch = Resource(144, 90, 2000, HEIGHT - 75, r"SpriteSheets\Enviorment\couch.png")
+        mirror = Resource(93, 129, 2900, HEIGHT - 450, r"SpriteSheets\Enviorment\mirror.png")
+        writing_01 = Resource(200, 150, 2700, HEIGHT - 150, r"SpriteSheets\Enviorment\writing_01.png")
+
+
+        self.enviorment.append(couch)
+        self.enviorment.append(mirror)
+        self.enviorment.append(writing_01)
+
         # Doors
 
         self.doors = []
@@ -92,51 +111,97 @@ class Game:
         
         # Blocks
         self.block_size = 32
+
         #floor
         #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
         self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-3, 140)]
 
+        # Pre start
+        for i in range(-70, -8):
+           self.floor.append(Block(i * self.block_size, HEIGHT - self.block_size, self.block_size))
 
+        # Second floor
         for i in range(40):
            self.floor.append(Block(887 + i * self.block_size, HEIGHT - 384, self.block_size))
         
+        # Post kitchen stairs
         for i in range(19):
            self.floor.append(Block(2400 + i * self.block_size, HEIGHT - 384, self.block_size))
 
-        for i in range(-10, 140):
+        # Third floor 
+           #pre stairs
+        for i in range(15):
+           self.floor.append(Block(887 + i * self.block_size, HEIGHT - 832, self.block_size))
+        
+            #Post stairs
+        for i in range(41):
+          self.floor.append(Block(1690 + i * self.block_size, HEIGHT - 832, self.block_size))
+
+        # Roof
+        for i in range(66):
+           self.floor.append(Block(887 + i * self.block_size, HEIGHT - 1344, self.block_size))
+        
+
+        # Bunker
+        for i in range(-70, 140):
             self.floor.append(Block(i * self.block_size, HEIGHT + 500, self.block_size))
 
         self.offset_x = 0
         self.offset_y = 0
-        self.scroll_area_width = 200
+        self.scroll_area_width = 400
         self.scroll_area_height = 150
 
-        for j in range(11):
-            self.floor.append(Block(888, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
-        
-        for j in range(11):
-            self.floor.append(Block(1785, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
 
         # Walls
+        
         self.walls = []
-        for j in range(25):
-            self.walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 75)])
 
+        # kitchen door
+        for j in range(11):
+            self.walls.append(Block(888, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
         
+        # Living door
+        for j in range(11):
+            self.walls.append(Block(1785, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
+
+        # Right house
+        for j in range(73):
+            self.walls.append(Block(2990, (HEIGHT - 195) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
+        
+        #left house
+        for j in range(43):
+            self.walls.append(Block(888, (HEIGHT - 640) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
+        
+        # Back house walls
+        self.back_walls = []
+        for j in range(40):
+            self.back_walls.append([Wall_Stone(600 + (i * self.block_size), (HEIGHT - 64) - self.block_size * j, self.block_size) for i in range(9, 75)])
+
+        # Second floor
+        for j in range(17):
+            self.walls.append(Block(1785, (HEIGHT - 551) - self.block_size // 2  * j, self.block_size - self.block_size // 2))
+
+
         self.stairs = []
+
+        # Living
         for i in range(23):
-            self.stairs.append(Block(2500 + (-i * self.block_size * 0.5), HEIGHT - self.block_size - (i * self.block_size * 0.5), self.block_size))
+            self.stairs.append(Block(2500 + (-i * self.block_size ), HEIGHT - self.block_size - (i * self.block_size), self.block_size))
         
+        # Second floor
         for i in range(23):
             self.stairs.append(Block(1200 + (i * self.block_size * 0.5), HEIGHT - (self.block_size * 13) - (i * self.block_size * 0.5), self.block_size))
         
+        # Bunker
         for i in range(34):
             self.stairs.append(Block(210 + (-i * self.block_size * 0.5), HEIGHT + 500 - (i * self.block_size * 0.5), self.block_size))
 
         self.stair_floor = []
+        # Kitchen
         for i in range(8):
            self.stair_floor.append(Block(2180 + i * self.block_size, HEIGHT - 384, self.block_size))
 
+        # Bunker
         for i in range(8):
             self.stair_floor.append(Block(-300 + i * self.block_size, HEIGHT - 32, self.block_size))
 
@@ -186,14 +251,17 @@ class Game:
 
             if ((self.player.rect.right - self.offset_x >= WIDTH - self.scroll_area_width) and self.player.x_vel > 0) or (
                 (self.player.rect.left - self.offset_x <= self.scroll_area_width) and self.player.x_vel < 0):
-                self.offset_x += self.player.x_vel
+                #if self.player.sector == "second_floor" and self.player.rect.x > 2500 :
+                #    pass
+                #else:
+                    self.offset_x += self.player.x_vel
 
             # drop
             if ((self.player.rect.top - self.offset_y >= HEIGHT - self.scroll_area_height) and self.player.y_vel > 0):
                 self.offset_y += self.player.y_vel * 3
 
             # up
-            elif (self.player.rect.bottom - self.offset_y <= self.scroll_area_height):
+            elif (self.player.rect.bottom - self.offset_y <= self.scroll_area_height * 3):
                 if self.player.y_vel < 0:
                     self.offset_y += self.player.y_vel 
                 elif self.player.x_vel > 0:
@@ -210,14 +278,22 @@ class Game:
 
     def draw(self):
         self.screen.blit(self.background, self.rect_background)
-        self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
         self.screen.blit(self.bunker_one, (self.rect_bunker_one.x - self.offset_x, self.rect_bunker_one.y - self.offset_y))
+        self.screen.blit(self.bunker_two, (self.rect_bunker_two.x - self.offset_x, self.rect_bunker_two.y - self.offset_y))
+        self.screen.blit(self.bunker_three, (self.rect_bunker_three.x - self.offset_x, self.rect_bunker_three.y - self.offset_y))
+        self.screen.blit(self.bunker_four , (self.rect_bunker_four.x - self.offset_x, self.rect_bunker_four.y - self.offset_y))
+        self.screen.blit(self.starting_room, (self.rect_starting_room.x - self.offset_x, self.rect_starting_room.y - self.offset_y))
 
-        for wall in self.walls:
-            for block in wall:
+        for back_wall in self.back_walls:
+            for block in back_wall:
                 block.draw(self.screen, self.offset_x, self.offset_y)
+
         for obj in self.floor:
             obj.draw(self.screen, self.offset_x, self.offset_y)        
+        
+        for wall in self.walls:
+            wall.draw(self.screen, self.offset_x, self.offset_y)  
+
         for stair in self.stairs:
             stair.draw(self.screen, self.offset_x, self.offset_y)
         
@@ -231,7 +307,7 @@ class Game:
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
         self.screen.blit(self.fire_truck, (self.rect_fire_truck.x - self.offset_x, self.rect_fire_truck.y - self.offset_y))
         
-        for furniture in self.kitchen_resources:
+        for furniture in self.enviorment:
             furniture.draw(self.screen, self.offset_x, self.offset_y)
         
         self.screen.blit(self.quick_revive, (self.rect_quick_revive.x - self.offset_x, self.rect_quick_revive.y - self.offset_y))
@@ -266,19 +342,29 @@ class Game:
                     player.rect.top = obj.rect.bottom # Si el personaje está saltando no lo sobrepasa
                     player.hit_head()
 
+                player.on_stairs = False
                 collided_objects.append(obj)
+        
+        for wall in self.walls:
+            if pygame.sprite.collide_mask(player, wall): # Si chocan los dos rects
+                if dy > 0:
+                    player.rect.bottom = wall.rect.top # Si el personaje está cayendo el personaje queda arriba del objeto
+                    player.landed()
+                elif dy < 0:
+                    player.rect.top = wall.rect.bottom # Si el personaje está saltando no lo sobrepasa
+                    player.hit_head()
+                
+                collided_objects.append(wall)
+        
 
-        for stair in stairs:
-            if player.rect.colliderect(stair.rect):
-                if player.looking_down or player.looking_up:
-                    player.rect.bottom = stair.rect.top
-                    player.landed()            
+        self.player.use_stairs(stairs)
 
         for stair_floor_block in self.stair_floor:
             if not player.looking_down and not player.looking_up:
                 if player.rect.colliderect(stair_floor_block.rect):
                     player.rect.bottom = stair_floor_block.rect.top
                     player.landed()
+                    self.player.on_stairs = False
 
             
         return collided_objects
@@ -290,6 +376,11 @@ class Game:
         for obj in objects:
             if pygame.sprite.collide_mask(player, obj):
                 collided_object = obj
+                break
+        
+        for wall in self.walls:
+            if pygame.sprite.collide_mask(player, wall):
+                collided_object = wall
                 break
 
         if player.rect.colliderect(self.rect_truck):
@@ -350,7 +441,6 @@ class Game:
             elif zombie.rect.y < 1000 and zombie.rect.y > 520:
                 zombie.sector = "underground"
             
-            print(zombie.rect.y, self.player.rect.y )
 
             zombie.follow_player(self.player)
                 

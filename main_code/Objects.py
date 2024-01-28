@@ -19,7 +19,7 @@ class Block(Object):
     def __init__(self, x, y, size):
         super().__init__(x, y, size, size)
     
-        block = get_block(size, 0, 128)
+        block = get_block(size, 64, 128)
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)
 
@@ -28,6 +28,6 @@ class Wall_Stone(Object):
     def __init__(self, x, y, size):
         super().__init__(x, y, size, size)
     
-        block = get_block(size, 0, 160)
+        block = get_block(size, 64, 160)
         self.image.blit(block, (0, 0))
         self.mask = pygame.mask.from_surface(self.image)

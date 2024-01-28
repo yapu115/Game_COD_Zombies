@@ -16,12 +16,12 @@ class Player(pygame.sprite.Sprite):
         self.x_vel = 0
         self.y_vel = 0
         self.mask = None
-        self.direction = "left"
+        self.direction = "right"
         self.animation_count = 0
         self.fall_count = 0
         self.jump_count = 0
         self.sprite = ""
-        self.score = 1500
+        self.score = 11500
 
         self.sector = "start"
 
@@ -37,6 +37,8 @@ class Player(pygame.sprite.Sprite):
         self.angle = 0
 
         self.gun = M1911(self.front_arm_rect.x + 5, self.front_arm_rect.y + 5)
+
+        self.on_stairs = False
 
     def jump(self):
         self.y_vel = -self.GRAVITY * 8
@@ -75,6 +77,14 @@ class Player(pygame.sprite.Sprite):
     def hit_head(self):
         self.fall_count = 0
         self.y_vel *= -1 
+
+    def use_stairs(self, stairs):
+        for stair in stairs:    
+            if self.rect.colliderect(stair.rect):
+                if self.looking_down or self.looking_up or self.on_stairs:
+                    self.on_stairs = True
+                    self.rect.bottom = stair.rect.top
+                    self.landed()
 
     def update_sprite(self):
         sprite_sheet = "stay"
