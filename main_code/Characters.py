@@ -1,70 +1,67 @@
 from typing import Any
+
+from pygame.sprite import Group
 from funciones import *
 from os.path import isfile, join
 from Guns import *
 import pygame
+import time
 
-class Player(pygame.sprite.Sprite):
-    BLOCK_COLOR = (255, 0, 0)
+class Character(pygame.sprite.Sprite):
+    """
+    Represents all characters in the game, for now the player and the zombies
+    """
     GRAVITY = 1
-    SPRITES = load_sprite_sheets("MainCharacters", "Nikolai", 27, 58, True)
     ANIMATION_DELAY = 5
-
     def __init__(self, x, y, width, height):
         super().__init__()
         self.rect = pygame.Rect(x, y, width, height)
         self.x_vel = 0
         self.y_vel = 0
+
         self.mask = None
-        self.direction = "right"
         self.animation_count = 0
         self.fall_count = 0
         self.jump_count = 0
-        self.sprite = ""
+        self.sprite = None
         self.score = 11500
+        self.life = 1
 
+        self.direction = "right"
         self.sector = "start"
-
-        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
-        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
-
-        self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 45, self.rect.y + 50)
-        self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 50)
 
         self.looking_up = False
         self.looking_down = False
 
-        self.angle = 0
-
-        self.gun = M1911(self.front_arm_rect.x + 5, self.front_arm_rect.y + 5)
-
-        self.on_stairs = False
-
-    def jump(self):
-        self.y_vel = -self.GRAVITY * 8
-        self.animation_count = 0
-        self.jump_count += 1
-        if self.jump_count == 1:
-            self.fall_count = 0
+        self.starting_time = time.time()
 
     def move(self, dx, dy): # Displaysment in x and displaysment in y
+        """
+        Represents the movement
+        """
         self.rect.x += dx
         self.rect.y += dy
     
     def move_left(self, vel):
+        """
+        Moves the character to the left
+        """
         self.x_vel = -vel
         if self.direction != "left":
             self.direction = "left"
             self.animation_count = 0
 
     def move_right(self, vel):
+        """
+        Moves the character to the right
+        """
         self.x_vel = vel
         if self.direction != "right":
             self.direction = "right"
             self.animation_count = 0
 
     def loop(self, fps):
-        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY ) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
+        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
         self.move(self.x_vel, self.y_vel)
 
         self.fall_count += 1
@@ -78,6 +75,53 @@ class Player(pygame.sprite.Sprite):
         self.fall_count = 0
         self.y_vel *= -1 
 
+    def update(self):
+        self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
+        self.mask = pygame.mask.from_surface(self.sprite) # Lo que permite el mask es que las colisionen funcionen con los pixeles del personaje y no con las del rectangulo
+
+
+
+
+class Player(Character):
+    """
+    Represents the player, who in the future will be 4 skins
+    """
+    SPRITES = load_sprite_sheets("MainCharacters", "Nikolai", 27, 58, True)
+
+    def __init__(self, x, y, width, height):
+        super().__init__(x, y, width, height)
+        # HUD
+        self.life = 100
+        self.top_life = 100
+        self.lives = 1
+        self.score = 11500
+        self.perks = []
+
+        # Animation
+        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
+        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
+
+        self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 45, self.rect.y + 50)
+        self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 50)
+
+        self.angle = 0
+
+        # Weapon
+        self.gun = M1911(self.front_arm_rect.x + 5, self.front_arm_rect.y + 5)
+
+        # Flags
+        self.on_stairs = False
+        self.being_attacked = False
+
+
+    def jump(self):
+        self.y_vel = -self.GRAVITY * 8
+        self.animation_count = 0
+        self.jump_count += 1
+        if self.jump_count == 1:
+            self.fall_count = 0
+
+
     def use_stairs(self, stairs):
         for stair in stairs:    
             if self.rect.colliderect(stair.rect):
@@ -85,6 +129,7 @@ class Player(pygame.sprite.Sprite):
                     self.on_stairs = True
                     self.rect.bottom = stair.rect.top
                     self.landed()
+
 
     def update_sprite(self):
         sprite_sheet = "stay"
@@ -99,7 +144,19 @@ class Player(pygame.sprite.Sprite):
         self.animation_count += 1 
         self.update()
         self.update_arm()
+        self.update_life()
 
+    def update_life(self):
+        passed_time = time.time() - self.starting_time
+        if self.life < self.top_life and not self.being_attacked:
+            if passed_time >= 5:
+                self.life += 10
+                self.starting_time = time.time()
+
+    def update_perks(self, screen):
+        for perk in self.perks:
+            perk.activate(screen, self)
+    
     def update_arm(self):
         self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\front_arm.png", 48, 12)
         self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Nikolai\back_arm.png", 46, 14)
@@ -168,9 +225,6 @@ class Player(pygame.sprite.Sprite):
             else:
                 self.gun.looking_down = False
 
-    def update(self):
-        self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
-        self.mask = pygame.mask.from_surface(self.sprite) # Lo que permite el mask es que las colisionen funcionen con los pixeles del personaje y no con las del rectangulo
 
     def draw(self, screen, offset_x, offset_y):
         screen.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
@@ -178,34 +232,18 @@ class Player(pygame.sprite.Sprite):
         self.gun.draw(screen, offset_x, offset_y)
         screen.blit(self.front_arm, (self.front_arm_rect.x - offset_x, self.front_arm_rect.y - offset_y))
 
+        self.update_perks(screen)
         self.gun.shoot()
 
 
-class Zombie(pygame.sprite.Sprite):
-    BLOCK_COLOR = (255, 0, 0)
-    GRAVITY = 1
-    SPRITES = load_sprite_sheets("MainCharacters", "zombies", 41, 55, True)
-    ANIMATION_DELAY = 5
+class Zombie(Character):
+    SPRITES = load_sprite_sheets("MainCharacters", "zombies", 38, 57, True)
 
     def __init__(self, x, y, width, height):
-        super().__init__()
-        self.rect = pygame.Rect(x, y, width, height)
-        self.x_vel = 0
-        self.y_vel = 0
-        self.mask = None
-        self.direction = "left"
-        self.animation_count = 0
-        self.fall_count = 0
-        self.jump_count = 0
-        self.sprite = ""
+        super().__init__(x, y, width, height)
         self.attack = False
-        self.life = 100
+        self.life = 70
         self.show = True
-
-        self.sector = "start"
-
-        self.looking_down = False
-        self.looking_up = False
 
         self.using_stairs = False
 
@@ -215,32 +253,6 @@ class Zombie(pygame.sprite.Sprite):
             self.rect.x += dx
         self.rect.y += dy
     
-    def move_left(self, vel):
-        self.x_vel = -vel
-        if self.direction != "left":
-            self.direction = "left"
-            self.animation_count = 0
-
-    def move_right(self, vel):
-        self.x_vel = vel
-        if self.direction != "right":
-            self.direction = "right"
-            self.animation_count = 0
-
-    def loop(self, fps):
-        self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY) # la cuenta simboliza la cantidad de tiempo que llevo cayendo
-        self.move(self.x_vel, self.y_vel)
-
-        self.fall_count += 1
-        self.update_sprite()
-
-    def landed(self):
-        self.fall_count = 0 # Le sacamos la gravedad de caida
-        self.y_vel = 0
-    
-    def hit_head(self):
-        self.fall_count = 0
-        self.y_vel *= -1 
 
     def go_upstairs(self, stairs_x, left_stairs, player):
         if player.rect.y > self.rect.y + 20:
@@ -260,8 +272,11 @@ class Zombie(pygame.sprite.Sprite):
 
     def follow_player(self, player):
         if self.rect.colliderect(player.rect):
-            pass
+            self.attack = True
+            self.attack_player(player)
         else:
+            self.attack = False
+            player.being_attacked = False
             if (self.sector != player.sector):
                 match(self.sector):
                     case "start":
@@ -278,24 +293,30 @@ class Zombie(pygame.sprite.Sprite):
                     self.move_right(5)
 
     def update_sprite(self):
-        sprite_sheet = "walk"
+        sprite_sheet = "walk_2"
+        if self.attack:
+            sprite_sheet = "attack"
 
         sprite_sheet_name = sprite_sheet + "_" + self.direction
         sprites = self.SPRITES[sprite_sheet_name]
 
         sprite_index = (self.animation_count // self.ANIMATION_DELAY) % len(sprites) # Para regular la cantidad de tiempo que pasa entre frame y frame
         self.sprite = sprites[sprite_index]
+
         self.animation_count += 1 
         self.update()
         self.die()
 
-    def update(self):
-        self.rect = self.sprite.get_rect(topleft=(self.rect.x, self.rect.y)) # Se ajusta constantemente el rectangulo en la sprite
-        self.mask = pygame.mask.from_surface(self.sprite) # Lo que permite el mask es que las colisionen funcionen con los pixeles del personaje y no con las del rectangulo
-
     def draw(self, window, offset_x, offset_y):
         window.blit(self.sprite, (self.rect.x - offset_x, self.rect.y - offset_y))
-    
+
+    def attack_player(self, player):
+        passed_time = time.time() - self.starting_time
+        if passed_time >= 1.5:
+            player.life -= 10
+            player.being_attacked = True
+            self.starting_time = time.time()
+
     def die(self):
         if self.life < 0:
             self.show = False

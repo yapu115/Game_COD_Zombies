@@ -1,5 +1,6 @@
 import pygame
 from funciones import insert_image, insert_rect
+from abc import ABC, abstractmethod
 
 class Resource(pygame.sprite.Sprite):
     def __init__(self, width, height, x, y, image):
@@ -66,3 +67,76 @@ class BunkerDoor(Resource):
     def draw(self, screen, offset_x, offset_y):
         self.update()
         screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
+
+
+class PerkMachine(Resource, ABC):
+    def __init__(self, width, height, x, y, perk_image, logo_image):
+        super().__init__(width, height, x, y, perk_image)
+        self.logo_image = logo_image
+        self.logo_width = 33
+        self.logo_height = 36
+
+        self.just_bought = True
+
+
+    @abstractmethod
+    def activate(self, screen, player):
+        """Activates the perk function on the player"""
+        
+
+
+class Juggernog(PerkMachine):
+    def __init__(self, x, y):
+        super().__init__(42, 150, x, y, r"SpriteSheets\Perks_machines\Juggernog.png", r"SpriteSheets\Perks_machines\juggernog_logo.png")
+
+    def activate(self, screen, player):
+
+        logo = Resource(self.logo_width, self.logo_width, 400, 620, self.logo_image)
+        screen.blit(logo.image, logo.rect)
+
+        player.top_life = 500
+
+        if self.just_bought:
+            player.life = 500
+            self.just_bought = False
+         
+
+class SpeedCola(PerkMachine):
+    def __init__(self, x, y):
+        super().__init__(37, 78, x, y, r"SpriteSheets\Perks_machines\speed_cola.png", r"SpriteSheets\Perks_machines\speed_cola_logo.png")
+
+
+    def activate(self, screen, player):
+        logo = Resource(33, 36, 400, 620, self.logo_image)
+        screen.blit(logo.image, logo.rect)
+
+        if self.just_bought:
+            player.gun.loading_speed *= 2
+            self.just_bought = False
+
+
+class DoubleTap(PerkMachine):
+    def __init__(self, x, y):
+        super().__init__(40, 62, x, y, r"SpriteSheets\Perks_machines\double_tap.png", r"SpriteSheets\Perks_machines\double_tap_logo.png")
+
+    def activate(self, screen, player):
+
+        logo = Resource(self.logo_width, self.logo_height, 400, 620, self.logo_image)
+        screen.blit(logo.image, logo.rect)
+        
+        if self.just_bought:
+            player.gun.bullet_damage *= 2
+            self.just_bought = False
+
+class QuickRevive(PerkMachine):
+    def __init__(self, x, y):
+        super().__init__(42, 150, x, y, r"SpriteSheets\Perks_machines\quick_revive.png", r"SpriteSheets\Perks_machines\quick_revive_logo.png")
+
+    def activate(self, screen, player):
+
+        logo = Resource(self.logo_width, self.logo_height, 400, 620, self.logo_image)
+        screen.blit(logo.image, logo.rect)
+        
+        if self.just_bought:
+            player.life = 500
+            self.just_bought = False

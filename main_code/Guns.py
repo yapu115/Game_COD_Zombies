@@ -5,18 +5,19 @@ from funciones import insert_image, insert_rect
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, sprite=r"SpriteSheets\Guns\bullet.png"):
         super().__init__()
+        # Base
         self.sprite = sprite
-        self.image = insert_image(sprite, 15, 10)
+        self.image = insert_image(sprite, 10, 5)
         self.rect = insert_rect(self.image, 1000, 1000)
-        self.on_air = False
         self.direction = "left"
-        self.looking_up = False
-        self.looking_down = False
         self.x = x
         self.y = y
-
         self.angle = 40
-
+        
+        # Flags
+        self.on_air = False
+        self.looking_up = False
+        self.looking_down = False
         self.first_second = True
         self.hit = False
 
@@ -81,8 +82,9 @@ class Bullet(pygame.sprite.Sprite):
 
 class Gun(pygame.sprite.Sprite):
 
-    def __init__(self, sprite, x, y, width, height, bullet_dmg, fire_velocity):
+    def __init__(self, sprite, x, y, width, height, bullet_dmg, fire_velocity, reloading_speed):
         super().__init__()
+        # Base
         self.sprite = sprite
         self.image = insert_image(self.sprite, width, height)
         self.rect = insert_rect(self.image, x, y)
@@ -90,22 +92,26 @@ class Gun(pygame.sprite.Sprite):
         self.direction = "left"
         self.width = width
         self.height = height
+        self.next_bullet = -1
 
-        self.charger = []
-        self.ammo = []
+        # Bullets
+        self.charger_ammo = []
+        self.spare_ammo = []
 
+        self.total_charger_ammo = 0
         self.bullet_damage = bullet_dmg
         self.fire_velocity = fire_velocity
+        self.reloading_speed = reloading_speed
 
+        # Flags
         self.fire = False
 
-        self.contador = -1
 
         self.looking_up = False
         self.looking_down = False
 
     def draw(self, screen, offset_x, offset_y):
-        for bullet in self.ammo:
+        for bullet in self.charger_ammo:
             bullet.fire(screen, offset_x, offset_y, self.fire_velocity)
         screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
             
@@ -118,7 +124,7 @@ class Gun(pygame.sprite.Sprite):
         if self.direction == "left":
             self.image = pygame.transform.flip(self.image, True, False)
 
-        for bullet in self.ammo:
+        for bullet in self.charger_ammo:
             if not bullet.on_air:
                 bullet.direction = self.direction
                 bullet.update(x, y)
@@ -133,24 +139,35 @@ class Gun(pygame.sprite.Sprite):
                 else:
                     bullet.looking_down = False
 
-    def charger_setup(self, charger_ammo, total_chargers):
-        self.ammo = [Bullet(self.rect.x, self.rect.y) for i in range(charger_ammo)]
+    def charger_setup(self, charger_ammo, spare_ammo):
+        self.charger_ammo = [Bullet(self.rect.x, self.rect.y) for i in range(charger_ammo)]
+        self.spare_ammo = [Bullet(self.rect.x, self.rect.y) for i in range(spare_ammo)]
+        self.total_charger_ammo = charger_ammo
+        self.next_bullet = charger_ammo - 1
 
     def shoot(self):
         try:
             if self.fire:
-                self.contador += 1
-                self.ammo[self.contador].on_air = True
+                self.next_bullet -= 1
+                self.charger_ammo[self.next_bullet].on_air = True
                 self.fire = False
         except IndexError:
-            print("se quedo sin balas")
+            self.reload()
+
+    def reload(self):
+        if self.spare_ammo:
+            if len(self.charger_ammo) < self.total_charger_ammo: 
+                bullet = self.spare_ammo.pop()
+                self.charger_ammo.append(bullet)
+                self.next_bullet = self.total_charger_ammo - 1
+
             
 
 
 class M1911(Gun):
     def __init__(self,x, y):
         self.sprite_m1911 = r"SpriteSheets\Guns\M1911.png"
-        super().__init__(self.sprite_m1911, x, y, 30, 22, 5, 5)
-        self.charger_setup(100, 80)
+        super().__init__(self.sprite_m1911, x, y, 30, 22, 10, 15, 1)
+        self.charger_setup(15, 80)
 
 
