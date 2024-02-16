@@ -16,12 +16,13 @@ class Resource(pygame.sprite.Sprite):
         screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 
 class Door(Resource):
-    def __init__(self, x, y):
-        super().__init__(x, y, 24, 192, r"SpriteSheets\doors\closed.png")
+    def __init__(self, x, y, width=24, height=192, image=r"SpriteSheets\doors\closed.png"):
+        super().__init__(x, y, width, height, image)
         self.x = x
         self.y = y
-        self.width = 24
-        self.height = 192
+        self.width = width
+        self.height = height
+
 
         self.state = "closed"
         self.closed = r"SpriteSheets\doors\closed.png"
@@ -44,13 +45,12 @@ class Door(Resource):
 # Combinar ambas puertas en una sola
         
         
-class BunkerDoor(Resource):
+class BunkerDoor(Door):
     def __init__(self, x, y):
         super().__init__(154, 128, x, y, r"SpriteSheets\doors\closed_bunker_door.png")
-        self.x = x
-        self.y = y
         self.width = 77 * 2.5
         self.height = 64 * 2.5
+
 
         self.state = "closed"
         self.closed = r"SpriteSheets\doors\closed_bunker_door.png"
@@ -64,9 +64,6 @@ class BunkerDoor(Resource):
         elif self.state == "closed":
             self.image = insert_image(self.closed, self.width, self.height)
 
-    def draw(self, screen, offset_x, offset_y):
-        self.update()
-        screen.blit(self.image, (self.rect.x - offset_x, self.rect.y - offset_y))
 
 
 class PerkMachine(Resource, ABC):
@@ -130,7 +127,7 @@ class DoubleTap(PerkMachine):
 
 class QuickRevive(PerkMachine):
     def __init__(self, x, y):
-        super().__init__(42, 150, x, y, r"SpriteSheets\Perks_machines\quick_revive.png", r"SpriteSheets\Perks_machines\quick_revive_logo.png")
+        super().__init__(70, 128, x, y, r"SpriteSheets\Perks_machines\quick_revive.png", r"SpriteSheets\Perks_machines\quick_revive_logo.png")
 
     def activate(self, screen, player):
 
