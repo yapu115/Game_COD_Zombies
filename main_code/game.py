@@ -10,6 +10,8 @@ from constants import *
 from Objects import *
 from enviorment import Door, BunkerDoor, Resource, Juggernog, QuickRevive
 
+import threading
+
 
 class Game:
     def __init__(self) -> None:
@@ -49,12 +51,15 @@ class Game:
 
         self.changing_round_time = 6000
         self.changing_round_start = 6000 #pygame.time.get_ticks()
+
+        self.power = False
+
         # HUD
         self.blood_points = funciones.insert_image(r"SpriteSheets\HUD\Points_blood.png", 34, 10)
         self.blood_points = pygame.transform.scale2x(self.blood_points)
         self.blood_points_rect = funciones.insert_rect(self.blood_points, 50, HEIGHT - 100)
         # Player
-        self.player = Player(400, HEIGHT - 20, 27, 58)
+        self.player = Player(400, HEIGHT - 20, 27, 58, 2)
 
         
         self.font = pygame.font.SysFont("inkfree", 25)
@@ -72,6 +77,10 @@ class Game:
         self.fire_truck = pygame.transform.scale2x(self.fire_truck)
         self.rect_fire_truck = funciones.insert_rect(self.fire_truck, 4000, HEIGHT - 125)
         self.fire_truck.set_colorkey((255, 255, 255))
+
+        self.power_switch = funciones.insert_image(r"SpriteSheets\Resources\power_switch.png", 70, 150)
+        self.rect_power_switch = funciones.insert_rect(self.power_switch, 2800, -250)
+
 
         # Kitchen
         self.enviorment = []
@@ -122,7 +131,6 @@ class Game:
         # Blocks
 
         #floor
-        #self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-WIDTH // self.block_size , WIDTH * 2 // self.block_size)]
         self.floor = [Block(i * self.block_size, HEIGHT - self.block_size, self.block_size) for i in range(-20, 140)]
 
         # Pre start
@@ -229,14 +237,6 @@ class Game:
         for i in range(5):
             self.stair_floor.append(Block(1500 + i * self.block_size, HEIGHT - self.block_size * 26, self.block_size))
 
-        # Hacer las paredes por separado y despues un append para unirlas todas en self.walls
-        self.outside_walls = []
-
-        self.upstairs_walls = []
-
-        self.bunker_walls = []
-
-
 
     def run(self):
         running = True
@@ -256,14 +256,18 @@ class Game:
                         if not self.player.gun.reloading:
                             self.player.gun.fire = True
 
-                    for door in self.doors:
-                        if (self.player.rect.colliderect((door.rect.x - 30, door.rect.y, door.rect.width, door.rect.height))) or (
-                        self.player.rect.colliderect((door.rect.x + 30, door.rect.y, door.rect.width, door.rect.height))):
-                            if event.key == pygame.K_e:
+                    if event.key == pygame.K_e:
+                        for door in self.doors:
+                            if (self.player.rect.colliderect((door.rect.x - 30, door.rect.y, door.rect.width, door.rect.height))) or (
+                            self.player.rect.colliderect((door.rect.x + 30, door.rect.y, door.rect.width, door.rect.height))):
                                 if door.state == "closed" and self.player.score >= 550: #cambiar 750 por una variable propia de las doors
                                     door.state = "opened"
                                     self.player.score -= 550
-                    
+                        if (self.player.rect.colliderect(self.rect_power_switch.x - 30, self.rect_power_switch.y, self.rect_power_switch.width, self.rect_power_switch.height)):
+                            if not self.power:
+                                self.power = True
+                                print(self.power)
+
                     for perk in self.perks:
                         if (self.player.rect.colliderect(perk.rect)):
                             if event.key == pygame.K_q:
@@ -303,8 +307,7 @@ class Game:
             else:
                 self.changing_round_start = pygame.time.get_ticks()
 
-            if self.player.life < 0:
-                print("perdiste capo")
+            #if self.player.life < 0:
         pygame.quit()
 
     def draw(self):
@@ -338,6 +341,7 @@ class Game:
 
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
         self.screen.blit(self.fire_truck, (self.rect_fire_truck.x - self.offset_x, self.rect_fire_truck.y - self.offset_y))
+        self.screen.blit(self.power_switch, (self.rect_power_switch.x - self.offset_x, self.rect_power_switch.y - self.offset_y))
         
         for furniture in self.enviorment:
             furniture.draw(self.screen, self.offset_x, self.offset_y)
@@ -461,6 +465,9 @@ class Game:
 
         if player.rect.colliderect(self.rect_fire_truck):
             collided_object = self.rect_fire_truck
+        
+        if player.rect.colliderect(self.rect_power_switch):
+            collided_object = self.rect_power_switch
 
         for door in self.doors:
             if (player.rect.colliderect(door.rect) and door.state == "closed"):
@@ -534,30 +541,36 @@ class Game:
         return round_image
 
     def update_round(self, round, changing_round_start):
-        print(changing_round_start)
         passed_changing_round_time = pygame.time.get_ticks() - changing_round_start
         if passed_changing_round_time >= self.changing_round_time:
             self.round += 1
             zombies_num = 0
+            zombies_vel = 0
             if self.round < 6:
                 match(self.round):
                     case 1: 
                         zombies_num = 7
-                        print("que")
+                        zombies_vel = 1
                     case 2:
                         zombies_num = 10
+                        zombies_vel = 1.2
                     case 3:
                         zombies_num = 14
+                        zombies_vel = 1.4
                     case 4:
                         zombies_num = 18
+                        zombies_vel = 1.6
                     case 5:
                         zombies_num = 22
+                        zombies_vel = 1.8
                     case 6:
                         zombies_num = 25
+                        zombies_vel = 2
             else:
                 zombies_num = self.round + 25 
+                zombies_vel = 2.2
 
-            self.zombies = [Zombie(300 + (100 * i), 100, 38, 57) for i in range(zombies_num)]
+            self.zombies = [Zombie(300 + (100 * i), 100, 38, 57, zombies_vel) for i in range(zombies_num)]
 
         self.round_changing = False
 

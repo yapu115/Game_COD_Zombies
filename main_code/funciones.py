@@ -23,13 +23,14 @@ def flip(sprites):
 def load_sprite_sheets(dir1, dir2, width, height, direction=False):
     path = join("SpriteSheets", dir1, dir2)
     images = [f for f in listdir(path) if isfile(join(path, f))] # Obtiene una lista de todos los archivos segun el path que se paso
-
+    
     all_sprites = {}
     for image in images:
         sprite_sheet = pygame.image.load(join(path, image)) # De todas las imagenes tomo una sola sprite
-        sprite_sheet.set_colorkey((0, 0, 0))
+        #sprite_sheet.set_colorkey((0, 0, 0))
         sprites = []
 
+        print(path, image,  sprite_sheet)
         for i in range(sprite_sheet.get_width() // width): # Tomo cada frame de la sprite sheet dividiendo el largo total con el largo pasado
             surface = pygame.Surface((width, height), pygame.SRCALPHA, 32) # Creo una superficie para ese frame
             rect = pygame.Rect(i * width, 0, width, height) # creo un rectangulo
