@@ -116,23 +116,24 @@ class Gun(pygame.sprite.Sprite):
         # times
         self.reloading_starting_time =  pygame.time.get_ticks()
         # Flags
+        self.big_gun = False
         self.fire = False
         self.reloading = False
         self.looking_up = False
         self.looking_down = False
 
         # Arms alignment
-        self.right_dir_x = 33
-        self.left_dir_x = -17
+        self.right_dir_x = 34
+        self.left_dir_x = -15
         self.center_y = -10
 
-        self.look_up_right_x = 25
+        self.look_up_right_x = 23
         self.look_up_left_x = -15
-        self.look_up_y = -50
+        self.look_up_y = -45
 
         self.look_down_right_x = 32
-        self.look_down_left_x = -20
-        self.look_down_y = 8
+        self.look_down_left_x = -18
+        self.look_down_y = 6
 
 
 
@@ -270,6 +271,8 @@ class RPK(Gun):
         self.sprite_ray_gun = r"SpriteSheets\Guns\ray_gun.png"
         super().__init__(self.sprite_ray_gun, x, y, 40, 26, 200, 10, 2)
         self.charger_setup(15, 80)
+
+        self.big_gun = True
 
 
 

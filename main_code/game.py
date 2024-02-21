@@ -8,7 +8,7 @@ from Characters import Player, Zombie
 import funciones
 from constants import *
 from Objects import *
-from enviorment import Door, BunkerDoor, Resource, Juggernog, QuickRevive
+from enviorment import Door, BunkerDoor, Resource, Juggernog, QuickRevive, SpeedCola, DoubleTap
 
 import threading
 
@@ -52,7 +52,7 @@ class Game:
         self.changing_round_time = 6000
         self.changing_round_start = 6000 #pygame.time.get_ticks()
 
-        self.power = False
+        self.power_on = False
 
         # HUD
         self.blood_points = funciones.insert_image(r"SpriteSheets\HUD\Points_blood.png", 34, 10)
@@ -124,10 +124,12 @@ class Game:
 
         # perks
 
-        self.quick_revive = QuickRevive(10, HEIGHT - 96)        
-        self.juggernog = Juggernog(500, HEIGHT + 432) 
+        quick_revive = QuickRevive(10, HEIGHT - 96)
+        juggernog = Juggernog(500, HEIGHT + 432)
+        speed_cola = SpeedCola(3700, HEIGHT - 115)
+        double_tap = DoubleTap(1000, HEIGHT - 895)
 
-        self.perks = [self.juggernog, self.quick_revive]
+        self.perks = [juggernog, quick_revive, speed_cola, double_tap]
         # Blocks
 
         #floor
@@ -264,13 +266,13 @@ class Game:
                                     door.state = "opened"
                                     self.player.score -= 550
                         if (self.player.rect.colliderect(self.rect_power_switch.x - 30, self.rect_power_switch.y, self.rect_power_switch.width, self.rect_power_switch.height)):
-                            if not self.power:
-                                self.power = True
-                                print(self.power)
+                            if not self.power_on:
+                                self.power_on = True
+                                print(self.power_on)
 
                     for perk in self.perks:
                         if (self.player.rect.colliderect(perk.rect)):
-                            if event.key == pygame.K_q:
+                            if event.key == pygame.K_q and perk not in self.player.perks and perk.available:
                                 self.player.perks.append(perk)
 
             self.player.loop(FPS)
@@ -307,7 +309,8 @@ class Game:
             else:
                 self.changing_round_start = pygame.time.get_ticks()
 
-            #if self.player.life < 0:
+            print(self.player.life)
+                
         pygame.quit()
 
     def draw(self):
@@ -337,6 +340,11 @@ class Game:
 
         for perk in self.perks:
             perk.draw(self.screen, self.offset_x, self.offset_y)
+            if not perk.always_available:
+                if self.power_on:
+                    perk.available = True
+                else:
+                    perk.available = False
 
 
         self.screen.blit(self.truck, (self.rect_truck.x - self.offset_x, self.rect_truck.y - self.offset_y))
@@ -492,11 +500,18 @@ class Game:
         collide_left = self.collide(player, objects, -PLAYER_VEL * 2)
         collide_right = self.collide(player, objects, PLAYER_VEL * 2)
 
-        if keys[pygame.K_a] and not collide_left: 
-            player.move_left(PLAYER_VEL)
+        if player.being_revived:
+            if keys[pygame.K_a] and not collide_left: 
+                player.move_left(2)
 
-        if keys[pygame.K_d] and not collide_right: 
-            player.move_right(PLAYER_VEL)
+            if keys[pygame.K_d] and not collide_right: 
+                player.move_right(2)
+        else:    
+            if keys[pygame.K_a] and not collide_left: 
+                player.move_left(PLAYER_VEL)
+
+            if keys[pygame.K_d] and not collide_right: 
+                player.move_right(PLAYER_VEL)
 
         if keys[pygame.K_LSHIFT] :
             player.looking_up = True

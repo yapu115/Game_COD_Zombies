@@ -6,6 +6,7 @@ from os.path import isfile, join
 from Guns import *
 import pygame
 import time
+from enviorment import Resource
 
 class Character(pygame.sprite.Sprite):
     """
@@ -114,6 +115,10 @@ class Player(Character):
         # Flags
         self.on_stairs = False
         self.being_attacked = False
+        self.extra_life = False
+        self.being_revived = False
+
+        self.reviving_starting_time = pygame.time.get_ticks()
 
 
     def jump(self):
@@ -135,7 +140,11 @@ class Player(Character):
 
     def update_sprite(self):
         sprite_sheet = "stay"
-        if self.x_vel != 0:
+        self.SPRITES = load_sprite_sheets("MainCharacters", "Richtofen", 25, 59, True)
+        if self.being_revived:
+            sprite_sheet = "reviving"
+            self.SPRITES = load_sprite_sheets("MainCharacters", "Richtofen", 45, 33, True)
+        elif self.x_vel != 0:
             sprite_sheet = "walk2"
         
         sprite_sheet_name = sprite_sheet + "_" + self.direction
@@ -147,27 +156,41 @@ class Player(Character):
         self.update()
         self.update_arm(self.gun)
         self.update_life()
-        #self.die()
 
     def update_life(self):
         passed_time = time.time() - self.starting_time
-        if self.life < self.top_life and not self.being_attacked:
-            if passed_time >= 3:
-                self.life += 10
-                self.starting_time = time.time()
+        if self.life > 0:
+            self.reviving_starting_time = pygame.time.get_ticks()
+            if self.life < self.top_life and not self.being_attacked:
+                if passed_time >= 3:
+                    self.life += 10
+                    self.starting_time = time.time()
+        else:
+            self.die(self.reviving_starting_time)
 
     def update_perks(self, screen):
         for perk in self.perks:
-            perk.activate(screen, self)
+            if perk.available:
+                perk.activate(screen, self)
     
     def update_arm(self, gun):
-        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Richtofen\front_arm.png", 48, 12)
-        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Richtofen\back_arm.png", 46, 14)
+        front_width, front_height = 48, 12
+        back_width, back_height = 46, 14
+        if self.being_revived:
+            front_width, front_height = 36, 9
+            back_width, back_height = 34, 11
+
+        self.front_arm = insert_image(r"SpriteSheets\MainCharacters\Richtofen\front_arm.png", front_width, front_height)
+        self.back_arm = insert_image(r"SpriteSheets\MainCharacters\Richtofen\back_arm.png", back_width, back_height)
 
 
         if self.direction == "right":
-            self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 45)
-            self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 48, self.rect.y + 49)
+            if self.being_revived:
+                self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 35, self.rect.y + 45)
+                self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 33, self.rect.y + 49)  
+            else:
+                self.front_arm_rect = insert_rect(self.front_arm, self.rect.x + 45, self.rect.y + 45)
+                self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 48, self.rect.y + 49)
 
             gun.direction = "right"
             gun.update(self.front_arm_rect.x + gun.right_dir_x, self.front_arm_rect.y + gun.center_y)
@@ -176,8 +199,12 @@ class Player(Character):
             self.front_arm = pygame.transform.flip(self.front_arm, True, False)
             self.back_arm = pygame.transform.flip(self.back_arm, True, False)
 
-            self.front_arm_rect = insert_rect(self.back_arm, self.rect.x + 6, self.rect.y + 44)
-            self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 4, self.rect.y + 49)
+            if self.being_revived:
+                self.front_arm_rect = insert_rect(self.back_arm, self.rect.x + 50, self.rect.y + 44)
+                self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 48, self.rect.y + 49)
+            else:
+                self.front_arm_rect = insert_rect(self.back_arm, self.rect.x + 6, self.rect.y + 44)
+                self.back_arm_rect = insert_rect(self.back_arm, self.rect.x + 4, self.rect.y + 49)
 
             gun.direction = "left"
             gun.update(self.front_arm_rect.x + gun.left_dir_x, self.front_arm_rect.y + gun.center_y)
@@ -230,9 +257,18 @@ class Player(Character):
 
 
 
-    #def die(self):
-        #if self.life < 0:
-            #self.
+    def die(self, revivig_start):
+        if self.extra_life:
+            self.being_revived = True
+            passed_time = pygame.time.get_ticks() - revivig_start
+            if passed_time >= 4000:
+                self.life = 100
+                self.being_revived = False
+                for perk in self.perks:
+                    perk.deactivate(self)
+                self.perks.clear()
+        else:
+            print("dead")
 
 
     def draw(self, screen, offset_x, offset_y):
@@ -296,22 +332,23 @@ class Zombie(Character):
             self.attack = True
             self.attack_player(player)
         else:
-            self.attack = False
-            player.being_attacked = False
-            if (self.sector != player.sector):
-                match(self.sector):
-                    case "start":
-                        match(player.sector):
-                            case "second_floor":
-                                self.go_upstairs(2520, True, player)
-            else:
-                self.using_stairs = False
-                self.looking_down = False
-                self.looking_up = False
-                if self.rect.x > player.rect.x:
-                    self.move_left(self.velocity)
+            if not player.being_revived:
+                self.attack = False
+                player.being_attacked = False
+                if (self.sector != player.sector):
+                    match(self.sector):
+                        case "start":
+                            match(player.sector):
+                                case "second_floor":
+                                    self.go_upstairs(2520, True, player)
                 else:
-                    self.move_right(self.velocity)
+                    self.using_stairs = False
+                    self.looking_down = False
+                    self.looking_up = False
+                    if self.rect.x > player.rect.x:
+                        self.move_left(self.velocity)
+                    else:
+                        self.move_right(self.velocity)
 
     def loop(self, fps, distance):
         self.y_vel += min(1, (self.fall_count / fps) * self.GRAVITY) # la cuenta simboliza la cantidad de tiempo que llevo cayendo

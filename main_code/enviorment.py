@@ -74,6 +74,10 @@ class PerkMachine(Resource, ABC):
         self.logo_height = 36
 
         self.just_bought = True
+        self.activated = False
+
+        self.available = False
+        self.always_available = False
 
 
     @abstractmethod
@@ -81,14 +85,37 @@ class PerkMachine(Resource, ABC):
         """Activates the perk function on the player"""
         
 
+class QuickRevive(PerkMachine):
+    '''Represents the quick revive soda that gives the player an extra life (3 times top)'''
+    def __init__(self, x, y):
+        super().__init__(70, 128, x, y, r"SpriteSheets\Perks_machines\quick_revive.png", r"SpriteSheets\Perks_machines\quick_revive_logo.png")
+        self.times_drinked = 0
+        self.available = True
+        self.always_available = True
+
+    def activate(self, screen, player):
+        if self.times_drinked < 4: 
+            logo = Resource(self.logo_width, self.logo_height, 550, 620, self.logo_image)
+            screen.blit(logo.image, logo.rect)
+            
+            if self.just_bought:
+                self.just_bought = False
+                self.times_drinked += 1
+                player.extra_life = True
+        else:
+            self.available = False
+
+    def deactivate(self, player):
+        player.extra_life = False
+        self.just_bought = True
+        
 
 class Juggernog(PerkMachine):
     def __init__(self, x, y):
         super().__init__(42, 150, x, y, r"SpriteSheets\Perks_machines\Juggernog.png", r"SpriteSheets\Perks_machines\juggernog_logo.png")
 
     def activate(self, screen, player):
-
-        logo = Resource(self.logo_width, self.logo_width, 400, 620, self.logo_image)
+        logo = Resource(self.logo_width, self.logo_height, 583, 620, self.logo_image)
         screen.blit(logo.image, logo.rect)
 
         player.top_life = 500
@@ -96,44 +123,45 @@ class Juggernog(PerkMachine):
         if self.just_bought:
             player.life = 500
             self.just_bought = False
-         
+    
+    def deactivate(self, player):
+        player.top_life = 100
+        self.just_bought = True
+
+
 
 class SpeedCola(PerkMachine):
     def __init__(self, x, y):
-        super().__init__(37, 78, x, y, r"SpriteSheets\Perks_machines\speed_cola.png", r"SpriteSheets\Perks_machines\speed_cola_logo.png")
+        super().__init__(80, 168, x, y, r"SpriteSheets\Perks_machines\speed_cola.png", r"SpriteSheets\Perks_machines\speed_cola_logo.png")
 
 
     def activate(self, screen, player):
-        logo = Resource(33, 36, 400, 620, self.logo_image)
+        logo = Resource(33, 36, 616, 620, self.logo_image)
         screen.blit(logo.image, logo.rect)
 
         if self.just_bought:
-            player.gun.loading_speed *= 2
+            player.gun.reloading_speed *= 2
             self.just_bought = False
+
+    def deactivate(self, player):
+        player.gun.reloading_speed /= 2
+        self.just_bought = True
 
 
 class DoubleTap(PerkMachine):
     def __init__(self, x, y):
-        super().__init__(40, 62, x, y, r"SpriteSheets\Perks_machines\double_tap.png", r"SpriteSheets\Perks_machines\double_tap_logo.png")
+        super().__init__(80, 124, x, y, r"SpriteSheets\Perks_machines\double_tap.png", r"SpriteSheets\Perks_machines\double_tap_logo.png")
 
     def activate(self, screen, player):
 
-        logo = Resource(self.logo_width, self.logo_height, 400, 620, self.logo_image)
+        logo = Resource(self.logo_width, self.logo_height, 649, 620, self.logo_image)
         screen.blit(logo.image, logo.rect)
         
         if self.just_bought:
             player.gun.bullet_damage *= 2
             self.just_bought = False
-
-class QuickRevive(PerkMachine):
-    def __init__(self, x, y):
-        super().__init__(70, 128, x, y, r"SpriteSheets\Perks_machines\quick_revive.png", r"SpriteSheets\Perks_machines\quick_revive_logo.png")
-
-    def activate(self, screen, player):
-
-        logo = Resource(self.logo_width, self.logo_height, 400, 620, self.logo_image)
-        screen.blit(logo.image, logo.rect)
         
-        if self.just_bought:
-            player.life = 500
-            self.just_bought = False
+    def deactivate(self, player):
+        player.gun.bullet_damage /= 2
+        self.just_bought = True
+
